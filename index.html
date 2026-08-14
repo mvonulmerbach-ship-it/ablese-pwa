@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ablese-Erfassung</title>
+<meta name="description" content="Zählerstände erfassen und ans Ablese-Postfach übertragen.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#3a63c0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ablesung">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <h1>Ablese-Erfassung</h1>
+  <p id="konto-zeile" class="konto-zeile" hidden></p>
+</header>
+
+<main>
+  <section id="anmelden-bereich">
+    <p>Zum Erfassen von Zählerständen bitte mit deinem Microsoft-Konto anmelden.</p>
+    <button id="btn-anmelden" class="btn-primaer">Mit Microsoft anmelden</button>
+    <p id="anmelden-fehler" class="fehler" hidden></p>
+  </section>
+
+  <section id="app-bereich" hidden>
+    <p id="zaehlerliste-stand" class="hinweis">Zählerliste wird geladen …</p>
+
+    <div id="warteschlangen-leiste" class="leiste">
+      <span id="warteschlange-text">Keine Einträge in der Warteschlange.</span>
+      <button id="btn-jetzt-senden" class="btn-sekundaer" hidden>Jetzt senden</button>
+    </div>
+    <p id="offline-hinweis" class="hinweis hinweis-warnung" hidden>
+      Kein Netz — Einträge werden lokal gespeichert und beim nächsten Öffnen/Senden übertragen.
+    </p>
+
+    <div id="erfassung-kopf">
+      <label>Datum
+        <input type="date" id="feld-datum">
+      </label>
+      <label>Anlass
+        <select id="feld-anlass"></select>
+      </label>
+    </div>
+
+    <div id="einheiten-liste"></div>
+  </section>
+
+  <section id="lade-bereich" class="hinweis">
+    <p>Lädt …</p>
+  </section>
+</main>
+
+<script src="vendor/msal/msal-browser.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/queue.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/graph.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

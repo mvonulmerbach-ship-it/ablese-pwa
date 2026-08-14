@@ -1,0 +1,156 @@
+/* Ablese-Erfassung — mobil-first, grosse Bedienelemente (Keller, Handschuhe,
+   kleine Bildschirme). Bewusst eigenständig von frontend/ui-tokens.css: die
+   PWA ist ein eigenes Repo ohne Server-Verbindung (Konzept-Grenze A2). */
+
+:root {
+  --blau: #3a63c0;
+  --blau-dunkel: #1a3a6b;
+  --grau-100: #f1f3f8;
+  --grau-300: #d0d5de;
+  --grau-700: #535965;
+  --rot: #c0392b;
+  --gruen: #1e7a46;
+  --weiss: #ffffff;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--grau-100);
+  color: #1f2430;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+header {
+  background: var(--blau-dunkel);
+  color: var(--weiss);
+  padding: 16px 20px calc(16px + env(safe-area-inset-top));
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+
+header h1 { margin: 0; font-size: 1.3rem; }
+.konto-zeile { margin: 4px 0 0; font-size: 0.85rem; opacity: 0.85; }
+
+main { padding: 16px; max-width: 640px; margin: 0 auto; }
+
+.hinweis {
+  background: var(--weiss);
+  border: 1px solid var(--grau-300);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: var(--grau-700);
+}
+.hinweis-warnung { border-color: var(--rot); color: var(--rot); }
+
+.leiste {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--weiss);
+  border: 1px solid var(--grau-300);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.fehler { color: var(--rot); font-size: 0.9rem; }
+
+button {
+  font-size: 1rem;
+  border-radius: var(--radius);
+  border: none;
+  padding: 12px 18px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.btn-primaer {
+  background: var(--blau);
+  color: var(--weiss);
+  width: 100%;
+  font-size: 1.05rem;
+}
+
+.btn-sekundaer {
+  background: var(--grau-100);
+  border: 1px solid var(--blau);
+  color: var(--blau);
+  white-space: nowrap;
+}
+
+#erfassung-kopf {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+#erfassung-kopf label {
+  flex: 1 1 140px;
+  font-size: 0.85rem;
+  color: var(--grau-700);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#erfassung-kopf input,
+#erfassung-kopf select {
+  font-size: 1rem;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--grau-300);
+  min-height: 44px;
+}
+
+.einheit-karte {
+  background: var(--weiss);
+  border: 1px solid var(--grau-300);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.einheit-karte h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  border-bottom: 1px solid var(--grau-100);
+  padding-bottom: 8px;
+}
+
+.zaehler-zeile {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--grau-100);
+}
+.zaehler-zeile:last-child { border-bottom: none; }
+
+.zaehler-kopf { font-size: 0.95rem; margin-bottom: 8px; }
+.hinweis-klein {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--grau-700);
+  margin-top: 2px;
+}
+
+.zaehler-eingabe {
+  display: flex;
+  gap: 10px;
+}
+.zaehler-eingabe input {
+  flex: 1;
+  font-size: 1.15rem;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--grau-300);
+  min-height: 48px;
+}
+.zaehler-eingabe input.feld-fehler { border-color: var(--rot); }
+.zaehler-eingabe button {
+  background: var(--gruen);
+  color: var(--weiss);
+  min-width: 120px;
+}
