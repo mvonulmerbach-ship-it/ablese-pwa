@@ -154,3 +154,19 @@ button {
   color: var(--weiss);
   min-width: 120px;
 }
+.foto-input-versteckt {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.zaehler-eingabe button.btn-foto {
+  background: var(--grau-100);
+  color: var(--blau-dunkel);
+  border: 1px solid var(--grau-300);
+  min-width: 48px;
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+  padding: 10px;
+}

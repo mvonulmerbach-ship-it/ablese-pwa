@@ -1,9 +1,11 @@
 # Ablese-Erfassung (PWA)
 
 Handy-App zum Erfassen von Zählerständen — schreibt je Ablesung eine kleine
-JSON-Datei ins OneDrive-Postfach (`Immobilien/Ablese-Postfach/eingang/`),
-das der Master (Etappe A1) einliest und per Klick übernimmt. Spricht **nie**
-mit dem Server — nur mit OneDrive über Microsoft Graph.
+JSON-Datei ins OneDrive-Postfach (`Immobilien/Verwaltung/Ablesewerte/eingang/`,
+Pfad in `js/config.js`), das der Master (Etappe A1) einliest und per Klick
+übernimmt. Spricht **nie** mit dem Server — nur mit OneDrive über Microsoft
+Graph. Meldet sich ein fremder Ableser an (A3), findet die App den Ordner
+automatisch über „Für mich freigegeben" statt über das eigene OneDrive.
 
 Quelldokument: `MOBIL_KONZEPT_WEG_A_2026-08-11.md` (Software-Root des
 Haupt-Repos). Dieses Repo ist bewusst eigenständig, **kein** Bestandteil von
@@ -38,7 +40,9 @@ offline (die App-Hülle ist gecacht).
 2. Zählerliste lädt automatisch (zeigt ihr Datenalter — „Zählerliste vom
    TT.MM.JJJJ").
 3. Datum und Anlass oben wählen (Vorgabe: heute / Stichtag).
-4. Je Zähler den Stand eintragen und „Erfassen" antippen.
+4. Je Zähler den Stand eintragen — optional daneben 📷 antippen für ein
+   Beleg-Foto (wird vor dem Senden automatisch verkleinert) — und
+   „Erfassen" antippen.
 5. Erfasste Stände werden sofort versucht zu senden; ohne Netz liegen sie in
    einer sichtbaren Warteschlange und gehen automatisch raus, sobald wieder
    Netz da ist (oder über „Jetzt senden").
@@ -47,7 +51,7 @@ offline (die App-Hülle ist gecacht).
 Vorschlag und werden dort per Klick gebucht (Muster Bank-Wizard) —
 Zählerstände korrigieren geht immer nur am Master.
 
-## Rundgang-Test (Abnahme A2)
+## Rundgang-Test (Abnahme A2/A4)
 
 Vor der ersten echten Nutzung: mit dem Handy tatsächlich in den Keller (oder
 ein Netz-loses Zimmer), Flugmodus an, mehrere Zählerstände erfassen,

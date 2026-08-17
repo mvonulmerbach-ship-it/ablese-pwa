@@ -202,12 +202,34 @@ function baueZaehlerZeile(item) {
   input.placeholder = "Zählerstand";
   input.id = `wert-${item.zaehler_id}`;
 
+  // A4: Beleg-Foto ist optional — ein reines <input type=file capture> statt
+  // der MediaDevices-API, funktioniert identisch auf Android/iOS ohne
+  // Kamera-Berechtigungsdialog der App selbst (Geräte-Realität, Konzept).
+  const fotoInput = document.createElement("input");
+  fotoInput.type = "file";
+  fotoInput.accept = "image/*";
+  fotoInput.capture = "environment";
+  fotoInput.className = "foto-input-versteckt";
+  fotoInput.id = `foto-${item.zaehler_id}`;
+
+  const fotoBtn = document.createElement("button");
+  fotoBtn.type = "button";
+  fotoBtn.className = "btn-foto";
+  fotoBtn.textContent = "📷";
+  fotoBtn.title = "Beleg-Foto aufnehmen (optional)";
+  fotoBtn.addEventListener("click", () => fotoInput.click());
+  fotoInput.addEventListener("change", () => {
+    fotoBtn.textContent = fotoInput.files.length ? "📷✓" : "📷";
+  });
+
   const btn = document.createElement("button");
   btn.type = "button";
   btn.textContent = heuteGespeichert.has(item.zaehler_id) ? "Erneut erfassen" : "Erfassen";
-  btn.addEventListener("click", () => erfassenKlick(item, input, btn));
+  btn.addEventListener("click", () => erfassenKlick(item, input, btn, fotoInput, fotoBtn));
 
   eingabe.appendChild(input);
+  eingabe.appendChild(fotoBtn);
+  eingabe.appendChild(fotoInput);
   eingabe.appendChild(btn);
 
   zeile.appendChild(kopf);
@@ -215,7 +237,27 @@ function baueZaehlerZeile(item) {
   return zeile;
 }
 
-async function erfassenKlick(item, input, btn) {
+// Vorschaugröße statt Archivbild (Konzept A4) — die Kamera liefert sonst
+// leicht 4000×3000 px, unnötig für einen Beleg und langsam zu übertragen.
+const FOTO_MAX_KANTE = 1600;
+const FOTO_JPEG_QUALITAET = 0.75;
+
+async function fotoKomprimieren(datei) {
+  const bitmap = await createImageBitmap(datei);
+  const skala = Math.min(1, FOTO_MAX_KANTE / Math.max(bitmap.width, bitmap.height));
+  const breite = Math.round(bitmap.width * skala);
+  const hoehe = Math.round(bitmap.height * skala);
+  const canvas = document.createElement("canvas");
+  canvas.width = breite;
+  canvas.height = hoehe;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, breite, hoehe);
+  bitmap.close?.();
+  return new Promise((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", FOTO_JPEG_QUALITAET);
+  });
+}
+
+async function erfassenKlick(item, input, btn, fotoInput, fotoBtn) {
   const wertText = input.value.trim();
   const wert = parseFloat(wertText);
   if (!wertText || Number.isNaN(wert)) {
@@ -239,9 +281,21 @@ async function erfassenKlick(item, input, btn) {
     gesendet: false,
   };
 
+  if (fotoInput?.files?.[0]) {
+    try {
+      eintrag.fotoBlob = await fotoKomprimieren(fotoInput.files[0]);
+      eintrag.fotoErweiterung = ".jpg";
+    } catch {
+      // Kompression fehlgeschlagen -> Ablesung trotzdem speichern, nur ohne
+      // Foto (die Zahlenerfassung darf daran nicht scheitern, Regel .109).
+    }
+  }
+
   await AbleseQueue.hinzufuegen(eintrag);
   heuteGespeichert.add(item.zaehler_id);
   input.value = "";
+  if (fotoInput) fotoInput.value = "";
+  if (fotoBtn) fotoBtn.textContent = "📷";
   btn.textContent = "Erneut erfassen";
   await aktualisiereWarteschlangenAnzeige();
   synchronisieren();

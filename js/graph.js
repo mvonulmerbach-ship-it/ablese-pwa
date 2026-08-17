@@ -132,10 +132,12 @@ const AbleseGraph = (() => {
     return resp.json();
   }
 
-  function ableseDatensatz(eintrag) {
+  function ableseDatensatz(eintrag, fotoReferenz) {
     // Exakt das Format aus dem Konzeptdokument (Abschnitt "Format je
-    // Ablesung") — bewusst redundant um die Zählernummer.
-    return {
+    // Ablesung") — bewusst redundant um die Zählernummer. "foto" NUR wenn
+    // tatsächlich eins hochgeladen wurde (A4) — Muster wie beim Master
+    // (ablese_postfach.gruppiere_fuer_uebernahme): kein erfundener Schlüssel.
+    const daten = {
       format: "ablesung-v1",
       id: eintrag.id,
       erfasst_am: eintrag.erstellt_am,
@@ -147,16 +149,42 @@ const AbleseGraph = (() => {
       anlass: eintrag.anlass,
       wert: eintrag.wert,
     };
+    if (fotoReferenz) daten.foto = fotoReferenz;
+    return daten;
+  }
+
+  async function fotoHochladen(token, basis, dateiname, blob) {
+    await ordnerSicherstellen(token, basis, "eingang/fotos");
+    const zielUrl = `${elementUrl(basis, `eingang/fotos/${dateiname}`)}:/content`;
+    const resp = await fetch(zielUrl, {
+      method: "PUT",
+      headers: kopfzeilen(token, "image/jpeg"),
+      body: blob,
+    });
+    if (!resp.ok) throw await graphFehler(resp);
+    return resp.json();
   }
 
   async function ablesungHochladen(token, eintrag) {
     const basis = await postfachBasisAufloesen(token);
     await ordnerSicherstellen(token, basis, "eingang");
+
+    // A4: erst das Foto (falls vorhanden), DANN die JSON-Datei, die es
+    // referenziert — scheitert der Foto-Upload, bleibt der ganze Eintrag in
+    // der Warteschlange und wird beim naechsten Versuch komplett wiederholt
+    // (Ordner-Vertrag Regel 2: Wiederholung ist harmlos).
+    let fotoReferenz = null;
+    if (eintrag.fotoBlob) {
+      const dateiname = `${eintrag.id}${eintrag.fotoErweiterung || ".jpg"}`;
+      await fotoHochladen(token, basis, dateiname, eintrag.fotoBlob);
+      fotoReferenz = `fotos/${dateiname}`;
+    }
+
     const zielUrl = `${elementUrl(basis, `eingang/ablesung_${eintrag.id}.json`)}:/content`;
     const resp = await fetch(zielUrl, {
       method: "PUT",
       headers: kopfzeilen(token, "application/json"),
-      body: JSON.stringify(ableseDatensatz(eintrag)),
+      body: JSON.stringify(ableseDatensatz(eintrag, fotoReferenz)),
     });
     if (!resp.ok) throw await graphFehler(resp);
     return resp.json();
