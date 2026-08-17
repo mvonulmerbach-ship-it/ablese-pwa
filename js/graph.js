@@ -2,10 +2,19 @@
 // MOBIL_KONZEPT_WEG_A_2026-08-11.md: zaehlerliste.json lesen,
 // eingang/ablesung_<uuid>.json schreiben (Format "ablesung-v1", exakt wie
 // backend/ablese_postfach.py es erwartet — Pflichtfelder zaehler_id/datum/wert).
+//
+// A3 (Mehrfach-Ableser): der Postfach-Ordner liegt in Max' OneDrive. Meldet
+// sich Max selbst an, ist er dort direkt unter dem eigenen Drive-Root zu
+// finden; meldet sich ein fremder Ableser an, sieht er ihn nur unter "Für
+// mich freigegeben" (sharedWithMe) — ein anderer Adressierungsweg in Graph
+// (ueber drives/{driveId}/items/{itemId} statt me/drive/root:/{pfad}).
+// Die App probiert den eigenen Weg zuerst und faellt automatisch auf die
+// Freigabe zurueck — kein manueller "bin ich Max oder Ableser"-Schalter.
 "use strict";
 
 const AbleseGraph = (() => {
   const GRAPH_BASIS = "https://graph.microsoft.com/v1.0";
+  let postfachBasisCache = null;
 
   function pfadKodieren(pfad) {
     return pfad.split("/").filter(Boolean).map(encodeURIComponent).join("/");
@@ -28,26 +37,76 @@ const AbleseGraph = (() => {
     return new Error(text);
   }
 
-  async function ordnerVorhanden(token, pfad) {
-    const resp = await fetch(`${GRAPH_BASIS}/me/drive/root:/${pfadKodieren(pfad)}`, {
+  // Praefix (VOR dem Pfad-Doppelpunkt) und ggf. bereits feststehender
+  // Pfadanteil je Zugriffsweg. Graph erlaubt genau EINEN Pfad-Doppelpunkt
+  // je Adresse — "root:/a:/b" waere ungueltig, deshalb wird der Postfach-
+  // Pfad (eigenes Drive) mit dem Unterpfad zu EINEM Segment verschmolzen,
+  // statt zwei Colon-Segmente zu verketten.
+  function basisSegment(basis) {
+    return basis.typ === "eigen"
+      ? { praefix: `${GRAPH_BASIS}/me/drive/root`, wurzelPfad: ABLESE_KONFIG.postfachPfad }
+      : { praefix: `${GRAPH_BASIS}/drives/${basis.driveId}/items/${basis.itemId}`, wurzelPfad: "" };
+  }
+
+  // Adresse EINES Elements unterhalb der Postfach-Wurzel (leerer/fehlender
+  // Unterpfad = die Wurzel selbst).
+  function elementUrl(basis, unterpfad) {
+    const { praefix, wurzelPfad } = basisSegment(basis);
+    const vollerPfad = [wurzelPfad, unterpfad].filter(Boolean).join("/");
+    return vollerPfad ? `${praefix}:/${pfadKodieren(vollerPfad)}` : praefix;
+  }
+
+  async function elementVorhanden(token, basis, unterpfad) {
+    const resp = await fetch(elementUrl(basis, unterpfad), { headers: kopfzeilen(token) });
+    return resp.ok;
+  }
+
+  // Findet den Postfach-Ordner unter "Für mich freigegeben" — Fall A3,
+  // fremdes Konto. `remoteItem` traegt drive-/item-ID des ECHTEN Ordners
+  // in Max' OneDrive; genau diese Referenz wird ab hier als Wurzel benutzt.
+  async function geteilteBasisSuchen(token) {
+    const name = ABLESE_KONFIG.postfachPfad.split("/").filter(Boolean).pop();
+    const resp = await fetch(`${GRAPH_BASIS}/me/drive/sharedWithMe`, {
       headers: kopfzeilen(token),
     });
-    return resp.ok;
+    if (!resp.ok) throw await graphFehler(resp);
+    const liste = await resp.json();
+    const treffer = (liste.value || []).find((e) => e.name === name && e.remoteItem);
+    if (!treffer) {
+      throw new Error(
+        `Postfach-Ordner „${name}" wurde nicht gefunden — weder im eigenen OneDrive ` +
+        `noch unter „Für mich freigegeben". Ist der Ordner für dieses Konto freigegeben?`
+      );
+    }
+    return {
+      typ: "geteilt",
+      driveId: treffer.remoteItem.parentReference.driveId,
+      itemId: treffer.remoteItem.id,
+    };
+  }
+
+  async function postfachBasisAufloesen(token) {
+    if (postfachBasisCache) return postfachBasisCache;
+    const eigen = { typ: "eigen" };
+    if (await elementVorhanden(token, eigen, null)) {
+      postfachBasisCache = eigen;
+      return postfachBasisCache;
+    }
+    postfachBasisCache = await geteilteBasisSuchen(token);
+    return postfachBasisCache;
   }
 
   // Legt fehlende Ordner der Reihe nach an (Graph erstellt keine
   // Zwischenordner von selbst). "fail" + 409-Toleranz macht das
   // nebenläufigkeitssicher, falls zwei Geräte gleichzeitig anlegen.
-  async function ordnerSicherstellen(token, pfad) {
-    const teile = pfad.split("/").filter(Boolean);
+  async function ordnerSicherstellen(token, basis, unterpfad) {
+    const teile = unterpfad.split("/").filter(Boolean);
     let bisher = "";
     for (const teil of teile) {
       const eltern = bisher;
       bisher = eltern ? `${eltern}/${teil}` : teil;
-      if (await ordnerVorhanden(token, bisher)) continue;
-      const zielUrl = eltern
-        ? `${GRAPH_BASIS}/me/drive/root:/${pfadKodieren(eltern)}:/children`
-        : `${GRAPH_BASIS}/me/drive/root/children`;
+      if (await elementVorhanden(token, basis, bisher)) continue;
+      const zielUrl = `${elementUrl(basis, eltern || null)}/children`;
       const resp = await fetch(zielUrl, {
         method: "POST",
         headers: kopfzeilen(token, "application/json"),
@@ -64,8 +123,8 @@ const AbleseGraph = (() => {
   // null = noch keine Zählerliste exportiert (A1 am Master noch nicht
   // gelaufen) — kein Fehler, sondern ein benannter Zustand fürs UI.
   async function zaehlerlisteLesen(token) {
-    const pfad = `${ABLESE_KONFIG.postfachPfad}/zaehlerliste.json`;
-    const resp = await fetch(`${GRAPH_BASIS}/me/drive/root:/${pfadKodieren(pfad)}:/content`, {
+    const basis = await postfachBasisAufloesen(token);
+    const resp = await fetch(`${elementUrl(basis, "zaehlerliste.json")}:/content`, {
       headers: kopfzeilen(token),
     });
     if (resp.status === 404) return null;
@@ -91,9 +150,10 @@ const AbleseGraph = (() => {
   }
 
   async function ablesungHochladen(token, eintrag) {
-    await ordnerSicherstellen(token, `${ABLESE_KONFIG.postfachPfad}/eingang`);
-    const pfad = `${ABLESE_KONFIG.postfachPfad}/eingang/ablesung_${eintrag.id}.json`;
-    const resp = await fetch(`${GRAPH_BASIS}/me/drive/root:/${pfadKodieren(pfad)}:/content`, {
+    const basis = await postfachBasisAufloesen(token);
+    await ordnerSicherstellen(token, basis, "eingang");
+    const zielUrl = `${elementUrl(basis, `eingang/ablesung_${eintrag.id}.json`)}:/content`;
+    const resp = await fetch(zielUrl, {
       method: "PUT",
       headers: kopfzeilen(token, "application/json"),
       body: JSON.stringify(ableseDatensatz(eintrag)),

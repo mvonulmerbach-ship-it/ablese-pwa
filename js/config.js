@@ -11,10 +11,15 @@ const ABLESE_KONFIG = {
   // "consumers" statt "common": die Registrierung erlaubt ausdrücklich NUR
   // persönliche Microsoft-Konten (siehe Registrierungs-Entscheidung A2).
   authority: "https://login.microsoftonline.com/consumers",
-  // Files.ReadWrite (NICHT .AppFolder) — normaler OneDrive-Zugriff auf den
-  // Postfach-Pfad, siehe Scope-Entscheidung im Konzeptdokument.
-  scopes: ["Files.ReadWrite", "User.Read"],
-  // Pfad relativ zum OneDrive-Root des angemeldeten Kontos (Max' Bestätigung
-  // A2-Session). Ändert sich das, ist dies die einzige Stelle.
-  postfachPfad: "Immobilien/Ablese-Postfach",
+  // Files.ReadWrite.All (NICHT .AppFolder) statt des schmaleren
+  // Files.ReadWrite: seit A3 melden sich auch fremde Konten an, die den
+  // Postfach-Ordner nur als Freigabe sehen ("mit mir geteilt") — dafür
+  // reicht der eigene-Drive-Scope nicht. Deckt Max' eigenes Konto mit ab.
+  scopes: ["Files.ReadWrite.All", "User.Read"],
+  // Pfad relativ zum OneDrive-Root DES EIGENTÜMER-Kontos (Max), nicht
+  // zwingend zum Root des angemeldeten Kontos — bei fremden Konten (A3)
+  // wird dieser Name über "Für mich freigegeben" gesucht (graph.js).
+  // Bestätigt A3-Session (14.08.2026); vorher A2-Namensvorschlag war
+  // "Immobilien/Ablese-Postfach", inzwischen überholt.
+  postfachPfad: "Immobilien/Verwaltung/Ablesewerte",
 };
