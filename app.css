@@ -170,3 +170,44 @@ button {
   font-size: 1.2rem;
   padding: 10px;
 }
+
+/* A5 (v0.49.169): Reiter-Umschalter Erfassen/Nachsehen + reiner Lese-Bereich. */
+#reiter-leiste { padding: 6px; gap: 6px; }
+.btn-reiter {
+  flex: 1;
+  background: transparent;
+  color: var(--grau-700);
+  min-height: 40px;
+}
+.btn-reiter-aktiv {
+  background: var(--blau);
+  color: var(--weiss);
+}
+
+.infobasis-block { margin-bottom: 18px; }
+.infobasis-block h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+  color: var(--blau-dunkel);
+}
+
+.info-karte {
+  background: var(--weiss);
+  border: 1px solid var(--grau-300);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.info-karte h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+.info-zeile {
+  font-size: 0.85rem;
+  color: var(--grau-700);
+  margin: 2px 0;
+}
+.info-leer { color: var(--grau-700); font-size: 0.85rem; font-style: italic; }
+
+.aufgabe-karte.severity-urgent { border-color: var(--rot); }
+.aufgabe-karte .info-zeile.severity-urgent-text { color: var(--rot); }

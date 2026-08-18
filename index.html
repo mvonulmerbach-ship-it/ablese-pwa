@@ -27,26 +27,55 @@
   </section>
 
   <section id="app-bereich" hidden>
-    <p id="zaehlerliste-stand" class="hinweis">Zählerliste wird geladen …</p>
-
-    <div id="warteschlangen-leiste" class="leiste">
-      <span id="warteschlange-text">Keine Einträge in der Warteschlange.</span>
-      <button id="btn-jetzt-senden" class="btn-sekundaer" hidden>Jetzt senden</button>
-    </div>
-    <p id="offline-hinweis" class="hinweis hinweis-warnung" hidden>
-      Kein Netz — Einträge werden lokal gespeichert und beim nächsten Öffnen/Senden übertragen.
-    </p>
-
-    <div id="erfassung-kopf">
-      <label>Datum
-        <input type="date" id="feld-datum">
-      </label>
-      <label>Anlass
-        <select id="feld-anlass"></select>
-      </label>
+    <div id="reiter-leiste" class="leiste">
+      <button type="button" id="reiter-erfassen" class="btn-reiter btn-reiter-aktiv">Erfassen</button>
+      <button type="button" id="reiter-nachsehen" class="btn-reiter">Nachsehen</button>
     </div>
 
-    <div id="einheiten-liste"></div>
+    <div id="erfassen-bereich">
+      <p id="zaehlerliste-stand" class="hinweis">Zählerliste wird geladen …</p>
+
+      <div id="warteschlangen-leiste" class="leiste">
+        <span id="warteschlange-text">Keine Einträge in der Warteschlange.</span>
+        <button id="btn-jetzt-senden" class="btn-sekundaer" hidden>Jetzt senden</button>
+      </div>
+      <p id="offline-hinweis" class="hinweis hinweis-warnung" hidden>
+        Kein Netz — Einträge werden lokal gespeichert und beim nächsten Öffnen/Senden übertragen.
+      </p>
+
+      <div id="erfassung-kopf">
+        <label>Datum
+          <input type="date" id="feld-datum">
+        </label>
+        <label>Anlass
+          <select id="feld-anlass"></select>
+        </label>
+      </div>
+
+      <div id="einheiten-liste"></div>
+    </div>
+
+    <!-- A5 (v0.49.169): reiner Lese-Bereich -- "Daten, keine Funktionen"
+         (Konzept). Nichts hier legt an, rechnet oder loest etwas aus. -->
+    <div id="nachsehen-bereich" hidden>
+      <section class="infobasis-block">
+        <h2>Einheiten &amp; Mieter</h2>
+        <p id="infobasis-einheiten-stand" class="hinweis">Wird geladen …</p>
+        <div id="infobasis-einheiten-liste"></div>
+      </section>
+
+      <section class="infobasis-block">
+        <h2>Letzte Zählerstände</h2>
+        <p id="infobasis-zaehlerstaende-stand" class="hinweis">Wird geladen …</p>
+        <div id="infobasis-zaehlerstaende-liste"></div>
+      </section>
+
+      <section class="infobasis-block">
+        <h2>Offene Aufgaben</h2>
+        <p id="infobasis-aufgaben-stand" class="hinweis">Wird geladen …</p>
+        <div id="infobasis-aufgaben-liste"></div>
+      </section>
+    </div>
   </section>
 
   <section id="lade-bereich" class="hinweis">

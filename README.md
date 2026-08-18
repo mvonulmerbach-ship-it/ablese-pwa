@@ -51,6 +51,26 @@ offline (die App-Hülle ist gecacht).
 Vorschlag und werden dort per Klick gebucht (Muster Bank-Wizard) —
 Zählerstände korrigieren geht immer nur am Master.
 
+## Nachsehen (Etappe A5, „Infobasis")
+
+Reiter **„Nachsehen"** oben in der App: reiner Lese-Bereich, keine Funktion
+legt an, rechnet oder bucht etwas. Zeigt drei täglich vom Master exportierte
+Datenbereiche, jeweils mit „Stand vom TT.MM.JJJJ":
+
+- **Einheiten & Mieter** — aktueller Mieter mit Telefon/E-Mail, Kaltmiete,
+  NK-Vorauszahlung, Kaution; leerstehende Einheiten stehen als „Leerstehend"
+  in der Liste statt zu fehlen.
+- **Letzte Zählerstände** — dieselbe Liste wie die Ablese-Seite am Master.
+- **Offene Aufgaben** — dieselbe Liste wie das Dashboard am Master.
+
+Der Export liegt in einem eigenen, **nie freigegebenen** OneDrive-Ordner
+NEBEN dem Postfach (`js/config.js::infobasisPfad`) — nur mit Max' eigenem
+Microsoft-Konto lesbar, ein fremder Ableser (A3) sieht ihn nicht. Läuft am
+Master automatisch hinter jedem Backup (`backend/infobasis_export.py`),
+kein Knopf nötig. Wie die Zählerliste wird jeder Bereich einzeln offline
+vorgehalten (localStorage) — ein fehlender Export blockiert die anderen
+beiden nicht.
+
 ## Rundgang-Test (Abnahme A2/A4)
 
 Vor der ersten echten Nutzung: mit dem Handy tatsächlich in den Keller (oder

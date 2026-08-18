@@ -22,4 +22,9 @@ const ABLESE_KONFIG = {
   // Bestätigt A3-Session (14.08.2026); vorher A2-Namensvorschlag war
   // "Immobilien/Ablese-Postfach", inzwischen überholt.
   postfachPfad: "Immobilien/Verwaltung/Ablesewerte",
+  // A5 (v0.49.169): eigener, NIE freigegebener Ordner NEBEN dem Postfach
+  // (backend/infobasis_export.py schreibt hierhin). Bewusst KEIN
+  // sharedWithMe-Fallback wie beim Postfach — nur Max' eigenes Konto liest
+  // ihn (graph.js::infobasisLesen), ein fremder Ableser sieht ihn nie.
+  infobasisPfad: "Immobilien/Infobasis",
 };

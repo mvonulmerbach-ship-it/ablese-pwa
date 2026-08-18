@@ -190,5 +190,22 @@ const AbleseGraph = (() => {
     return resp.json();
   }
 
-  return { zaehlerlisteLesen, ablesungHochladen };
+  // A5 (v0.49.169): die Infobasis liegt in Max' EIGENEM Drive und wird NIE
+  // freigegeben — anders als der Postfach-Zugriff oben also KEIN Fallback
+  // auf "Für mich freigegeben". Ein fremder Ableser (A3) hat dieses Konto
+  // nie zu sehen bekommen und bekommt hier schlicht 404. null = noch kein
+  // Export gelaufen (A5 am Master noch nicht gebaut) — kein Fehler, ein
+  // benannter Zustand fürs UI (Muster zaehlerlisteLesen).
+  async function infobasisLesen(token, datei) {
+    const praefix = `${GRAPH_BASIS}/me/drive/root`;
+    const pfad = `${ABLESE_KONFIG.infobasisPfad}/${datei}`;
+    const resp = await fetch(`${praefix}:/${pfadKodieren(pfad)}:/content`, {
+      headers: kopfzeilen(token),
+    });
+    if (resp.status === 404) return null;
+    if (!resp.ok) throw await graphFehler(resp);
+    return resp.json();
+  }
+
+  return { zaehlerlisteLesen, ablesungHochladen, infobasisLesen };
 })();
