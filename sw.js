@@ -3,12 +3,18 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
-const CACHE_NAME = "ablese-huelle-v1";
+// v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
+// gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
+const CACHE_NAME = "ablese-huelle-v2";
 const HUELLE = [
   "./",
   "index.html",
   "app.css",
+  "ui-tokens.css",
+  "ui-tokens-dark.css",
   "manifest.json",
+  "js/icons.js",
+  "js/theme.js",
   "js/config.js",
   "js/queue.js",
   "js/auth.js",

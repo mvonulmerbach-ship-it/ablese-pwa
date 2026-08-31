@@ -93,6 +93,17 @@ async function init() {
   els.infoAufgabenStand = q("infobasis-aufgaben-stand");
   els.infoAufgabenListe = q("infobasis-aufgaben-liste");
 
+  // UI-Uebernahme 31.08.2026: Symbole aus der Icon-Bank (js/icons.js) vor
+  // die statischen Beschriftungen — derselbe Zeichenweg wie am Master
+  // (currentColor, kein Farbwert im Symbol). Der Theme-Knopf existierte
+  // beim fruehen Lauf von js/theme.js noch nicht; sein Zustand wird hier
+  // nachgezogen.
+  els.reiterErfassen.insertAdjacentHTML("afterbegin", icSvg("clipboard-list"));
+  els.reiterNachsehen.insertAdjacentHTML("afterbegin", icSvg("eye"));
+  els.btnJetztSenden.insertAdjacentHTML("afterbegin", icSvg("arrow-up-right") + " ");
+  els.offlineHinweis.insertAdjacentHTML("afterbegin", icSvg("triangle-alert") + " ");
+  themeZustandAnwenden(themeDunkelLesen());
+
   els.feldDatum.value = feldDatumStandard();
   els.feldAnlass.innerHTML = ABLESE_ANLAESSE
     .map(([wert, label]) => `<option value="${wert}">${label}</option>`)
@@ -405,11 +416,13 @@ function baueZaehlerZeile(item) {
   const fotoBtn = document.createElement("button");
   fotoBtn.type = "button";
   fotoBtn.className = "btn-foto";
-  fotoBtn.textContent = "📷";
+  fotoBtn.innerHTML = icSvg("camera");
   fotoBtn.title = "Beleg-Foto aufnehmen (optional)";
   fotoBtn.addEventListener("click", () => fotoInput.click());
   fotoInput.addEventListener("change", () => {
-    fotoBtn.textContent = fotoInput.files.length ? "📷✓" : "📷";
+    // Gewaehltes Foto: Haken statt Kamera, positive Textfarbe (Token).
+    fotoBtn.innerHTML = icSvg(fotoInput.files.length ? "circle-check" : "camera");
+    fotoBtn.classList.toggle("foto-gewaehlt", !!fotoInput.files.length);
   });
 
   const btn = document.createElement("button");
@@ -485,7 +498,7 @@ async function erfassenKlick(item, input, btn, fotoInput, fotoBtn) {
   heuteGespeichert.add(item.zaehler_id);
   input.value = "";
   if (fotoInput) fotoInput.value = "";
-  if (fotoBtn) fotoBtn.textContent = "📷";
+  if (fotoBtn) { fotoBtn.innerHTML = icSvg("camera"); fotoBtn.classList.remove("foto-gewaehlt"); }
   btn.textContent = "Erneut erfassen";
   await aktualisiereWarteschlangenAnzeige();
   synchronisieren();
