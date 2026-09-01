@@ -1,0 +1,506 @@
+/* =============================================================================
+   UI_TOKENS_DARK_OBSIDIAN_2026-08-25.css
+   Dark Mode fuer die Immobilienverwaltung (Web)
+
+   Herkunft: Max' Obsidian-Oberflaeche — Theme „Minimal", Dark-Style
+   „minimal-dark-tonal", Farbschema „minimal-nord-dark", Akzentfarbe #5c9472
+   aus `.obsidian/appearance.json`. Zuarbeit und Kontrastnachweis:
+   `Zuarbeit/DARKMODE_KONZEPT_2026-08-25.md` (Max' Entscheidung 25.08.2026).
+
+   Setzt ui-tokens.css voraus und wird NACH dieser geladen. Ueberschreibt
+   ausschliesslich die semantische Ebene — die Token-NAMEN sind in beiden
+   Modi identisch, deshalb muss keine einzige Komponente etwas von Dark Mode
+   wissen. Umschaltung ueber [data-theme="dark"] am <html>-Element.
+
+   WARUM DIE NAMEN GEBLIEBEN SIND (v0.49.212): die Zuarbeit spricht eine
+   eigene Namenssprache (--grund, --flaeche, --handlung). Von ihren 77 Namen
+   kennt das gebaute Frontend genau EINEN. Die Datei byte-gleich zu
+   uebernehmen haette 124 der 125 Dark-Ueberschreibungen geloescht und 71
+   Tokens ohne Verbraucher angelegt (Vorrat, U1). Max hat deshalb am
+   25.08.2026 entschieden: die WERTE wandern 1:1, die NAMEN bleiben. Die
+   Zuarbeit liegt unveraendert am Software-Root als Herkunftsnachweis.
+
+   AUFBAU — und das ist neu gegenueber der Fassung bis .211: die rohen
+   Obsidian-Werte stehen EINMAL im Block (a); jedes Anwendungs-Token
+   darunter ist ein reiner var()-Verweis. Bis .211 stand hier 125-mal ein
+   Hex-Literal, und dieselbe Farbe an sechs Stellen. Das ist dieselbe
+   Trennung, die die helle Datei seit .133 fuehrt (Palette + Brueckenblock),
+   und sie ist als Test gepinnt.
+
+     (a) BASIS — die rohen Nord-/Obsidian-Werte
+     (b) Flaechen, Text, Linien, Interaktion, Seitenleiste
+     (c) Status-Chips
+     (d) Diagrammfarben
+     (e) Formular-Optik (A1) · Leerzustand (A3) · Assistent (A4)
+     (f) Detailseite (A5) · Diagramm-Werkzeuge (A6) · Seitenleiste (A7)
+   ============================================================================= */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ==========================================================================
+     (a) BASIS — unveraendert aus Obsidian/Minimal Nord Dark
+     ========================================================================== */
+
+  /* --- Grundtoene. „tonal" heisst: Seitenleiste und Inhaltsflaeche tragen
+     DENSELBEN Grund (--bg1). Getrennt wird durch Karten und Rahmen, nicht
+     durch zwei Grautoene — das ist die wichtigste Struktur-Entscheidung des
+     Konzepts und der Grund, warum die eigene dunklere Leiste bis .211 hier
+     verschwindet. --- */
+  --o-bg1:   #2E3440;   /* Seite UND Leiste */
+  --o-bg2:   #3B4252;   /* Karte, Dialog */
+  --o-ui1:   #434C5E;   /* Rahmen; zugleich die Ebene UEBER der Karte */
+  --o-ui2:   #58647B;   /* Rahmen stark, Fokus */
+  --o-tx1:   #D8DEE9;   /* Text — 9.25 auf dem Grund, AAA */
+  --o-tx2:   #9EAFCC;   /* Text gedaempft — 5.62, AA */
+  --o-tx3:   #4C566A;   /* NUR Linien und Deko — 1.69, nie Text */
+
+  /* Obsidians --tx3 traegt dort Dekoration; bei uns stehen an dieser Stelle
+     Platzhalter, Einheiten und Nebenangaben. Deshalb eine aufgehellte
+     Textfassung (4.92, AA) — die einzige bewusste Abweichung im Textbereich,
+     benannt im Konzept Abschnitt 2. --- */
+  --o-tx-schwach: #99a3b6;
+
+  /* --- Durchscheinende Flaechen, AUFGELOEST. Obsidian setzt --bg3 als
+     rgba(135,152,190,.15). Ein Token, dessen Farbe davon abhaengt, was
+     dahinter liegt, laesst sich nicht nachrechnen — und ein Kontrast, den
+     niemand nachrechnen kann, ist geglaubt statt gemessen (U1). Der Wert
+     steht deshalb als das, was man SIEHT, je einmal fuer die beiden Gruende,
+     auf denen er vorkommt. Die Mischung ist als Test gepinnt. --- */
+  --o-bg3-auf-grund:    #3B4353;   /* 15 % auf dem Grund — Leiste, aktiver Ort */
+  --o-bg3-auf-flaeche:  #464F62;   /* 15 % auf der Karte — Tabellenzeile */
+
+  /* --- Max' Akzentgruen. Der Ursprungswert #5c9472 erreicht als Flaeche
+     gegen den Grund nur 3.53 und traegt weisse Schrift mit 3.54 — beides zu
+     wenig. Der UI-Master loest das in seiner eigenen Dark-Fassung genau so:
+     im Dunklen wird die Primaerfarbe HELLER und die Schrift darauf DUNKEL
+     (Primaerfarbe = primary-400, Schrift darauf = surface-900).
+     Aus #5c9472 (HSL 144°/23 %/47 %) wird deshalb #87b599 — dieselbe Farbe
+     mit Helligkeit 62 %, Kontrast 5.41 mit dem Grundton als Schrift.
+     --o-akzent bleibt stehen und wird der Akzent des spaeteren HELLEN Modus. --- */
+  --o-akzent:          #5c9472;
+  --o-akzent-flaeche:  #87b599;   /* 5.41 auf dem Grund */
+  --o-akzent-hell:     #9ac0a9;   /* Ueberfahren; zugleich Schrift auf der KARTE */
+  --o-akzent-rand:     #71a787;   /* Umriss, Fokusring, Textlink auf dem Grund */
+  --o-akzent-still-grund:   #39434B;  /* 12 % auf --o-bg1 */
+  --o-akzent-still-flaeche: #44505B;  /* 12 % auf --o-bg2 */
+
+  /* --- Nord-Aurora und -Frost, woertlich aus dem Theme. --- */
+  --o-rot:      #BF616A;
+  --o-orange:   #D08770;
+  --o-gelb:     #EBCB8B;
+  --o-gruen:    #A3BE8C;
+  --o-violett:  #B48EAD;
+  --o-cyan:     #88C0D0;
+  --o-blau:     #81A1C1;
+
+  /* --- Die EINZIGE Stufe, die die dunkle Palette zusaetzlich braucht
+     (H1, v0.50.3 — Dunkelmodus-Ergaenzung Abschnitt 3, Max' Entscheidung 5).
+     Nord-Rot traegt gegen den GRUND 3,05 und damit knapp die Schwelle fuer
+     Bedienelement-Grenzen — gegen die KARTE aber nur 2,46. Genau dort steht es:
+     als Feldkante am Eingabefeld und als Linie am negativen Betrag, und Felder
+     wie Betraege liegen auf Karten. Dieselbe Farbe, nur so weit aufgehellt,
+     dass sie beide Gruende traegt: 3,73 auf dem Grund, 3,00 auf der Karte.
+     Alle anderen Nord-Werte tragen auf beiden Gruenden. --- */
+  --o-rot-rand: #c7757c;
+
+  /* --- Status in zwei abgeleiteten Fassungen. Nord-Aurora ist als FLAECHE
+     gedacht; als Schrift auf dem Grund reichen Rot (3.05) und Violett (4.41)
+     nicht. Regel des Konzepts: Text = Farbe mit +14 Punkten Helligkeit,
+     Flaeche = 12 % der Farbe auf dem Grund. Sie reproduziert die sechs Werte
+     der Zuarbeit auf das Byte genau, und die Cyan-Familie ist nach derselben
+     Regel ergaenzt - gebraucht wird sie, weil "offen" und "bereit" beide
+     einen RING tragen und die Farbe dort die einzige Unterscheidung ist
+     (U2: Form UND Farbe).
+
+     EINE Familie weicht ab, und zwar gemessen: das Konzept rechnet seine
+     Kontraste ausschliesslich gegen den GRUND. Statustext steht bei uns aber
+     auch auf der KARTE - ein negativer Betrag in einer Tabellenzeile, der
+     Pflichtstern an einem Feldlabel. Dort faellt Rot mit +14 auf 4.07 und
+     verfehlt AA als einzige der sieben. Es traegt deshalb +17 (5.60 auf dem
+     Grund, 4.51 auf der Karte) - der kleinste ganzzahlige Zuschlag, der
+     beide Gruende traegt; ein Test rechnet genau das nach. --- */
+  --o-rot-text:          #d89fa4;
+  --o-rot-flaeche:       #3f3945;
+  --o-gelb-text:         #f5e6c8;
+  --o-gelb-flaeche:      #454649;
+  --o-gruen-text:        #c7d8ba;
+  --o-gruen-flaeche:     #3c4549;
+  --o-violett-text:      #d0b9cc;
+  --o-violett-flaeche:   #3e3f4d;
+  --o-cyan-text:         #bbdbe4;
+  --o-cyan-flaeche:      #394551;
+  --o-blau-text:         #b1c5d9;
+  --o-blau-flaeche:      #38414f;
+
+  /* --- Sequenzielle Diagramm-Rampe. Nord hat keine sechsstufige Rampe; sie
+     ist aus dem Frost-Blau #81A1C1 (H 210°, S 34 %) in gleichen
+     Helligkeitsschritten 35…85 % abgeleitet — eine benannte Bruecke, keine
+     zweite Quelle. Stufe 4 liegt auf dem Ausgangswert. --- */
+  --o-rampe-1: #3B5978;
+  --o-rampe-2: #4C739A;
+  --o-rampe-3: #658CB3;
+  --o-rampe-4: #87A6C4;
+  --o-rampe-5: #AABFD5;
+  --o-rampe-6: #CCD9E6;
+
+  /* ==========================================================================
+     (b) FLAECHEN, TEXT, LINIEN, INTERAKTION, SEITENLEISTE
+     ========================================================================== */
+
+  /* --- Flaechen. E11 (v0.50.6) DREHT DIE LEITER IM DUNKLEN NICHT UM ---------
+     Im Hellen tauschen Grund und Behaelter die Plaetze: der Grund wird weiss,
+     Karte und Kachel werden grau. Hier bleibt alles, wie es ist -- und das ist
+     kein Versaeumnis, sondern die Vorgabe: Schablonen-Konzept 6.6 sagt fuer
+     den Dunkelmodus ausdruecklich „die Ebenen-Reihenfolge bleibt: aktiver =
+     heller", und die Zuarbeit wiederholt es in 5.1 („Grund dunkel,
+     Tabellenflaeche eine Stufe heller. Die Leiter dreht nicht um").
+     Der Behaelter liegt im Dunklen also UEBER dem Grund, im Hellen darunter.
+     Beide Male steht der Grund in der Mitte der drei Stufen. --- */
+  --flaeche-seite:            var(--o-bg1);
+  --flaeche-card:             var(--o-bg2);
+  --flaeche-ueber:            var(--o-bg2);              /* E11 -- die Ebene UEBER dem Grund.
+                                                            Im Hellen ist sie weiss und damit
+                                                            vom Behaelter verschieden; hier
+                                                            faellt sie MIT ihm zusammen, weil
+                                                            6.6 im Dunklen nur drei Stufen fuer
+                                                            realistisch haelt. GEMESSEN und
+                                                            nicht geraten: --o-ui1 waere die
+                                                            naechsthoehere Stufe, aber
+                                                            --text-schwach traegt darauf nur
+                                                            3,89 -- unter AA. Der Dialog fuehrt
+                                                            gedaempfte Schrift, die Aufklapp-
+                                                            Panels (--dw-menue-flaeche,
+                                                            --nav-menue-flaeche) tun das nicht
+                                                            und stehen deshalb weiter auf
+                                                            --o-ui1. Obsidian selbst fuehrt
+                                                            --o-bg2 als „Karte, Dialog". */
+  --flaeche-leiste:           var(--o-bg1);              /* tonal: wie die Seite */
+  --flaeche-tabellenkopf:     var(--o-bg1);              /* eine Stufe UNTER der Karte */
+  --flaeche-zeile-hover:      var(--o-bg3-auf-flaeche);
+  --flaeche-zeile-auswahl:    var(--o-ui1);              /* Zustand: deckend, nicht nur ueberfahren */
+  --flaeche-deaktiviert:      var(--o-bg1);
+
+  /* --- Text. Obsidian fuehrt fuer Ueberschrift und Fliesstext denselben Wert
+     (--tx1); die Trennung der hellen Datei faellt hier bewusst zusammen,
+     statt eine Stufe zu erfinden, die die Quelle nicht hat. --- */
+  --text-stark:          var(--o-tx1);
+  --text-normal:         var(--o-tx1);
+  --text-schwach:        var(--o-tx2);
+  --text-deaktiviert:    var(--o-tx-schwach);
+  --text-invers:         var(--o-bg1);       /* dunkel auf der aufgehellten Handlung */
+  --text-positiv:        var(--o-gruen-text);
+  --text-negativ:        var(--o-rot-text);
+
+  /* --- Linien --- */
+  --linie:            var(--o-ui1);
+  --linie-stark:      var(--o-ui2);
+  --linie-auswahl:    var(--o-akzent-rand);
+
+  /* --- Interaktion --- */
+  --aktion-primaer:          var(--o-akzent-flaeche);
+  /* H1 (v0.50.3): dieselbe Rollentrennung wie im Hellen. Dort traegt die
+     Flaechenstufe als Schrift zu wenig; hier ist es umgekehrt genauso —
+     die Flaechenstufe steht auf dem GRUND, die Schrift auf der KARTE, und
+     dafuer fuehrt die Palette seit .212 eine eigene, hellere Stufe. */
+  --aktion-primaer-schrift:  var(--o-akzent-hell);
+  --aktion-primaer-hover:    var(--o-akzent-hell);
+  --fokus-ring:              var(--o-akzent-rand);
+  --fokus-schein:            var(--o-akzent-still-flaeche);
+
+  /* --- Seitenleiste. Sie traegt jetzt den Seitengrund (tonal), deshalb
+     darf der ueberfahrene Punkt keine volle Flaeche mehr sein: die stille
+     Fassung der Handlungsfarbe reicht und blendet nachts nicht. --- */
+  /* H1 (v0.50.3): die zwei Rollen, die der helle Modus neu getrennt hat.
+     Im Dunkeln bleibt die Leiste eine eigene, dunkle Flaeche — der ueberfahrene
+     Eintrag traegt deshalb weiterhin die HELLE Schrift, und die Kante zum
+     Seitengrund darf nicht auffallen (dort trennt schon die Flaeche). */
+  --leiste-text-aktiv:      var(--o-tx1);
+  --linie-leiste:           var(--o-bg1);
+
+  --leiste-text-ruhig:       var(--o-tx2);
+  --leiste-flaeche-aktiv:    var(--o-akzent-still-grund);
+
+  /* ==========================================================================
+     (c) STATUS-CHIPS — die FORM des Punktes (Kreis/Ring/Raute/Quadrat) traegt
+     die Unterscheidung unabhaengig von der Farbe und bleibt unberuehrt (U2).
+     ========================================================================== */
+
+  /* Zahlungsabgleich */
+  --chip-bereit-bg:                  var(--o-blau-flaeche);
+  --chip-bereit-text:                var(--o-blau-text);
+  --chip-bereit-punkt:               var(--o-blau);          /* Form: ring */
+  --chip-gebucht-bg:                 var(--o-gruen-flaeche);
+  --chip-gebucht-text:               var(--o-gruen-text);
+  --chip-gebucht-punkt:              var(--o-gruen);         /* Form: kreis */
+  --chip-ohne-vorschlag-bg:          var(--o-ui1);
+  --chip-ohne-vorschlag-text:        var(--o-tx1);
+  --chip-ohne-vorschlag-punkt:       var(--o-tx2);           /* Form: ring */
+  --chip-keine-mietzahlung-bg:       var(--o-violett-flaeche);
+  --chip-keine-mietzahlung-text:     var(--o-violett-text);
+  --chip-keine-mietzahlung-punkt:    var(--o-violett);       /* Form: quadrat */
+  --chip-ueberfaellig-bg:            var(--o-rot-flaeche);
+  --chip-ueberfaellig-text:          var(--o-rot-text);
+  --chip-ueberfaellig-punkt:         var(--o-rot-text);      /* Form: raute */
+
+  /* Aufgaben */
+  --chip-offen-bg:                   var(--o-cyan-flaeche);
+  --chip-offen-text:                 var(--o-cyan-text);
+  --chip-offen-punkt:                var(--o-cyan);          /* Form: ring */
+  --chip-erledigt-bg:                var(--o-gruen-flaeche);
+  --chip-erledigt-text:              var(--o-gruen-text);
+  --chip-erledigt-punkt:             var(--o-gruen);         /* Form: kreis */
+
+  /* Prioritaet */
+  --chip-hoch-bg:                    var(--o-rot-flaeche);
+  --chip-hoch-text:                  var(--o-rot-text);
+  --chip-hoch-punkt:                 var(--o-rot-text);      /* Form: raute */
+  --chip-mittel-bg:                  var(--o-gelb-flaeche);
+  --chip-mittel-text:                var(--o-gelb-text);
+  --chip-mittel-punkt:               var(--o-gelb);          /* Form: ring */
+  --chip-niedrig-bg:                 var(--o-ui1);
+  --chip-niedrig-text:               var(--o-tx1);
+  --chip-niedrig-punkt:              var(--o-tx2);           /* Form: ring */
+
+  /* ==========================================================================
+     (d) DIAGRAMMFARBEN — die acht kategorialen aus Nord-Aurora und -Frost,
+     die Rampe aus der Frost-Blau-Ableitung in (a).
+
+     **Reihenfolge und Platz 8 sind mit H1 (v0.50.3) GERECHNET statt gewaehlt**
+     (Dunkelmodus-Ergaenzung Abschnitt 3, Max' Entscheidung 5). Platz 8 trug
+     zuvor den gedaempften Textton — acht Grad neben Frost-Blau auf Platz 1 und
+     unter Deuteranopie gar nicht davon zu trennen (Farbabstand dE 3,4). Er
+     bekommt jetzt Max' Akzentgruen, und die Reihenfolge ist so gesetzt, dass
+     die ersten k Farben maximal auseinanderliegen — ein Diagramm zeigt fast nie
+     acht Reihen, sondern zwei bis vier. Kleinster Abstand unter Deuteranopie:
+     bei zwei Reihen 64,0 statt 45,7; bei acht 10,2 statt 3,4.
+
+     **Kein neuer Farbwert** — nur ein Tausch und eine Reihenfolge.
+
+     Und die unbequeme Wahrheit dazu: acht Reihen rettet auch die beste
+     Anordnung nicht. Wer acht zeichnet, braucht zusaetzlich Strichart,
+     Markerform oder direkte Beschriftung — dieselbe Einsicht, die bei den
+     Status-Chips zur FORM gefuehrt hat.
+     ========================================================================== */
+  --diagramm-1: var(--o-blau);            /* Frost-Blau */
+  --diagramm-2: var(--o-gelb);            /* Aurora-Gelb */
+  --diagramm-3: var(--o-rot);             /* Aurora-Rot */
+  --diagramm-4: var(--o-gruen);           /* Aurora-Gruen */
+  --diagramm-5: var(--o-akzent-flaeche);  /* Max' Akzentgruen — loest den
+                                             gedaempften Textton auf Platz 8 ab */
+  --diagramm-6: var(--o-violett);         /* Aurora-Violett */
+  --diagramm-7: var(--o-cyan);            /* Frost-Cyan */
+  --diagramm-8: var(--o-orange);          /* Aurora-Orange */
+
+  --diagramm-seq-1: var(--o-rampe-1);
+  --diagramm-seq-2: var(--o-rampe-2);
+  --diagramm-seq-3: var(--o-rampe-3);
+  --diagramm-seq-4: var(--o-rampe-4);
+  --diagramm-seq-5: var(--o-rampe-5);
+  --diagramm-seq-6: var(--o-rampe-6);
+
+  /* ==========================================================================
+     (e) FORMULAR-OPTIK (A1) · LEERZUSTAND (A3) · ASSISTENT (A4)
+
+     Die Ebenen-Leiter aus 6.6 bleibt, sie faellt nur mit der Palette
+     zusammen: Seite/Feld --o-bg1  <  Karte --o-bg2  <  Fokus --o-ui1. Drei
+     Sprossen statt der vier von .211 — im tonalen Schema gibt es unter dem
+     Grund nichts mehr, und genau das ist der Punkt des Schemas.
+     ========================================================================== */
+  --feld-flaeche:             var(--o-bg1);   /* Ruhe: eine Stufe UNTER der Karte */
+  --feld-flaeche-fokus:       var(--o-ui1);   /* Fokus: eine Stufe UEBER der Karte */
+  --feld-flaeche-deaktiviert: var(--o-bg2);   /* gesperrt: verschmilzt mit der Karte */
+  --feld-text:                var(--o-tx1);
+  --feld-text-platzhalter:    var(--o-tx-schwach);
+  --feld-label:               var(--o-tx2);
+  --feld-pflicht:             var(--o-rot-text);
+  --feld-fokus-kontur:        var(--o-akzent-rand);
+  --feld-fehler-kante:        var(--o-rot-rand);   /* H1: 2,46 auf der Karte -> 3,00 */
+  --feld-fehler-text:         var(--o-rot-text);
+
+  /* Die Bahn in Ruhe ist ein BEDIENELEMENT und braucht 3.0 gegen die
+     Karte. Der Rahmenton kommt dort nur auf 1.69 - er trennt Flaechen,
+     er traegt keine Bedienung. */
+  --feld-schalter-aus:        var(--o-tx-schwach);
+  --feld-schalter-an:         var(--o-akzent-flaeche);
+  --feld-schalter-knopf:      var(--o-bg1);   /* dunkler Knopf auf heller Bahn */
+
+  /* Die MASSE (Hoehe, Polster, Schriftgroessen, Radius, Abstaende) sind
+     modusunabhaengig und stehen deshalb nur in der hellen Datei — eine
+     zweite Zahl hier waere eine zweite Quelle fuer dieselbe Aussage. Das
+     gilt ab v0.49.212 ausdruecklich auch fuer die Master-Masse: die Zuarbeit
+     fuehrt sie in ihrem Abschnitt (f) INNERHALB des Dark-Blocks, dort waeren
+     sie modusabhaengig. Sie stehen deshalb in ui-tokens.css. */
+
+  --leer-symbol:              var(--o-tx-schwach);  /* 3.96 auf der Karte — Symbol, kein Text */
+  --leer-titel:               var(--o-tx1);
+  --leer-text:                var(--o-tx2);
+  --leer-flaeche:             var(--o-bg2);         /* = Karte; der Zustand IST die Flaeche */
+  --leer-linie:               var(--o-ui1);
+
+  --skelett-balken:           var(--o-bg1);         /* wartet auf Fuellung: tritt zurueck */
+
+  /* Der erledigte und der aktive Schritt tragen aufgehellte Flaechen und
+     deshalb DUNKLE Schrift — dieselbe Umkehr wie beim Primaerknopf. */
+  --as-erledigt-flaeche:      var(--o-gruen);
+  --as-erledigt-text:         var(--o-bg1);
+  --as-erledigt-linie:        var(--o-gruen);
+  --as-aktiv-flaeche:         var(--o-akzent-flaeche);
+  --as-aktiv-text:            var(--o-bg1);
+  --as-aktiv-beschriftung:    var(--o-tx1);
+  --as-offen-flaeche:         var(--o-bg1);
+  --as-offen-text:            var(--o-tx2);
+  --as-offen-linie:           var(--o-ui1);
+  --as-beschriftung:          var(--o-tx2);
+  --as-pflicht-flaeche:       var(--o-ui1);
+  --as-pflicht-text:          var(--o-tx1);
+
+  /* ==========================================================================
+     (f) DETAILSEITE (A5) · DIAGRAMM-WERKZEUGE (A6) · SEITENLEISTE (A7)
+     ========================================================================== */
+  --karte-kopf-flaeche:       var(--o-bg1);   /* Kopf liegt unter der Karte (A5) */
+  --karte-titel:              var(--o-tx1);
+  --karte-erklaerung:         var(--o-tx2);
+  --karte-linie:              var(--o-ui1);
+  /* Der Textlink steht auf dem Kopf UND auf der Karte. Auf dem Grund reichte
+     --o-akzent-rand (4.51), auf der Karte nicht mehr (3.63); die Flaechen-
+     fassung kommt dort nur auf 4.36. Deshalb eine Stufe heller — derselbe
+     Wert, den der Knopf beim Ueberfahren traegt (5.03 auf der Karte). */
+  --karte-tat:                var(--o-akzent-hell);
+
+  /* Gestrichelte Kante: als Nichttext sind 3.0 noetig. Der Rahmenton --o-ui2
+     kommt auf dem Grund nur auf 2.10 - dunkel braucht die Linie MEHR
+     Helligkeit als hell, nicht weniger. */
+  --platz-linie:              var(--o-tx-schwach);
+  --platz-flaeche:            var(--o-bg1);
+  --platz-titel:              var(--o-tx1);
+  --platz-text:               var(--o-tx2);
+
+  --zeile-flaeche:            var(--o-bg1);
+  --zeile-flaeche-hover:      var(--o-bg3-auf-flaeche);
+
+  /* Was schwebt, liegt vorn - dunkel heisst das HELLER als die Karte. Im
+     tonalen Schema ist die Ebene ueber der Karte der Rahmenton. Der Tooltip
+     folgt dem NICHT: er bleibt wie im Hellen der dunkelste Baustein (Kopf des
+     Abschnitts (j)) und traegt den Seitengrund. Gegen die Karte, ueber der er
+     steht, hebt er sich damit nach unten ab; sein Text bleibt weiss (12.49),
+     der Reihenname kommt auf 5.62. */
+  --dw-menue-flaeche:         var(--o-ui1);
+  --dw-menue-linie:           var(--o-ui2);
+  --dw-menue-text:            var(--o-tx1);
+  --dw-menue-hover:           var(--o-ui2);
+
+  --dgt-flaeche:              var(--o-bg1);
+  --dgt-name:                 var(--o-tx2);
+
+  --schatten-card: 0 1px 2px rgb(0 0 0 / 0.45), 0 2px 10px rgb(0 0 0 / 0.45);
+
+  /* --- Seitenleiste (A7), auf dem tonalen Grund neu gerechnet ------------
+
+     Obsidian markiert den aktiven Navigationspunkt ueber seine Regel
+     `nav-item-background-active` mit `var(--bg3)` — einer hellen,
+     DURCHSCHEINENDEN Flaeche, nicht mit der Akzentfarbe. Das bestaetigt A7 (Ort statt
+     Handlung, R2) und Max' Entscheidung vom 25.08. („hell statt anthrazit").
+
+     RICHTIGSTELLUNG zu .211: dort trug der Ort eine fast weisse Flaeche mit
+     DUNKLEM Text. Obsidians --bg3 auf dem Grund ergibt #3B4353 — eine dunkle
+     Flaeche. Dunkler Text darauf kaeme auf 1.85 und waere unlesbar; der Text
+     kehrt sich deshalb um und traegt jetzt --o-tx1 (8.03).
+
+     Ebenso ueberholt ist der Satz aus .211, --nav-neu-text bleibe in beiden
+     Modi weiss: die Flaeche darunter ist zwar weiter die Handlungsfarbe,
+     aber die ist im Dunklen AUFGEHELLT (weiss darauf nur 2.31). Der Knopf
+     bekommt hier deshalb erstmals eine eigene dunkle Textfassung (5.41). --- */
+  --nav-ort-flaeche:          var(--o-bg3-auf-grund);
+  --nav-ort-text:             var(--o-tx1);
+  --nav-abschnitt-flaeche:    var(--o-bg1);   /* folgt dem Leisten-Grund (tonal) */
+
+  --nav-neu-flaeche:          var(--o-akzent-flaeche);
+  --nav-neu-flaeche-hover:    var(--o-akzent-hell);
+  --nav-neu-text:             var(--o-bg1);
+
+  --nav-menue-flaeche:        var(--o-ui1);
+  --nav-menue-linie:          var(--o-ui2);
+  --nav-menue-text:           var(--o-tx1);
+  --nav-menue-hover:          var(--o-ui2);
+
+  /* ==========================================================================
+     (g) MELDUNG, PILLE, MARKE UND DIE WEICHEN STATUSFLAECHEN — R1
+
+     Die zwanzig Tokens dieses Blocks waren bis .212 die einzigen benutzten
+     Farb-Tokens OHNE Dunkelfassung. Der Grund war mechanisch und ist mit R1
+     behoben: sie standen im <style> der `index.html`, das NACH dieser Datei
+     geladen wird und dieselbe Spezifitaet traegt — von hier aus nicht
+     ueberschreibbar. Seit R1 stehen sie in `ui-tokens.css`, und hier steht
+     ihre Dunkelfassung.
+
+     Zwei Rollen kehren im Dunklen um, beides Regeln, die seit .212 gelten:
+     die HANDLUNGSFARBE hellt auf und traegt dunkle Schrift (6.6), und eine
+     LINIE braucht dunkel MEHR Helligkeit, nicht weniger.
+     ========================================================================== */
+
+  /* Die Meldung ist in BEIDEN Modi der dunkelste Baustein — dieselbe
+     Entscheidung wie beim Tooltip (A6) und beim Toast seit v0.28. Sie traegt
+     deshalb den Grundton und hebt sich ueber Schatten und Rundung ab, nicht
+     ueber ihre Helligkeit. Die beiden farbigen Fassungen nehmen die weiche
+     Statusflaeche statt der vollen Farbe: nur so bleibt EINE Schriftfarbe
+     fuer alle drei Meldungen lesbar (9.25 / 7.27 / 8.26). */
+  --flaeche-toast:          var(--o-bg1);
+  --flaeche-toast-ok:       var(--o-gruen-flaeche);
+  --flaeche-toast-fehler:   var(--o-rot-flaeche);
+  --text-toast:             var(--o-tx1);
+
+  --flaeche-positiv:        var(--o-gruen);          /* Fortschrittsbalken — 6.13 als Flaeche */
+  --flaeche-negativ:        var(--o-rot-flaeche);
+  --linie-negativ:          var(--o-rot-rand);   /* H1: liegt auf der Karte */
+  --text-negativ-leise:     var(--o-rot-text);
+  --text-warnung:           var(--o-gelb-text);
+
+  /* Der Akzent ist der WARME Gegenpol und bleibt von Max' Akzentgruen
+     getrennt — sonst traegt der Akzent-Knopf dieselbe Farbe wie der
+     Primaer-Knopf und die beiden Rollen fallen zusammen. Nord-Amber
+     (--o-gelb) ist im Dunklen eine HELLE Flaeche und traegt deshalb die
+     dunkle Schrift (8.00), genau wie die aufgehellte Handlungsfarbe. Das
+     Ueberfahren hellt weiter auf (10.13) statt abzudunkeln. */
+  --aktion-akzent:          var(--o-gelb);
+  --aktion-akzent-hover:    var(--o-gelb-text);
+  --linie-akzent:           var(--o-gelb);           /* 8.00 auf dem Grund */
+  --linie-akzent-leise:     var(--o-gelb-text);      /* Fokusring auf der Leiste — 10.13 */
+  --marke-flaeche:          var(--o-gelb);           /* Highlighter: gefundene Stelle */
+  --marke-text:             var(--o-bg1);            /* dunkel auf dem Highlighter — 8.00 */
+
+  --pill-ok-flaeche:        var(--o-gruen-flaeche);
+  --pill-ok-text:           var(--o-gruen-text);     /* 6.52 auf der eigenen Flaeche */
+  --pill-ok-linie:          var(--o-gruen);
+  --pill-warn-flaeche:      var(--o-gelb-flaeche);
+  --pill-warn-text:         var(--o-gelb-text);      /* 7.66 auf der eigenen Flaeche */
+  --pill-warn-linie:        var(--o-gelb);
+
+  --dgt-text:               var(--o-tx1);            /* Tooltip-Schrift auf --dgt-flaeche */
+
+  /* ==========================================================================
+     (h) DIE LEISESTE TEXTSTUFE UND DIE DREI ABDUNKLUNGEN — R2
+
+     `--text-leise` trifft im Dunklen genau die Stufe, die das Konzept fuer
+     „Platzhalter, Einheiten und Nebenangaben" eingefuehrt hat.
+
+     Die drei Abdunklungen sind wie `--schatten-card` KEINE Farben, die Text
+     tragen: sie stehen deshalb als vollstaendige Werte und nicht als
+     var()-Verweis. Sie sind im Dunklen KRAEFTIGER als im Hellen — ein
+     Schatten trennt hier nicht durch Dunkelheit vom Grund (der ist schon
+     dunkel), sondern durch Tiefe.
+     ========================================================================== */
+
+  --text-leise:             var(--o-tx-schwach);
+
+  --schatten-schwebend:     0 4px 12px rgb(0 0 0 / 0.55);
+  --schatten-dialog:        0 10px 40px rgb(0 0 0 / 0.60);
+  --schatten-schleier:      rgb(0 0 0 / 0.60);
+
+  /* R4: die drei fehlenden Chip-Linien. Im Dunklen traegt die Linie die
+     volle Familienfarbe — hell ist sie die 200er-Stufe, weil sie sich dort
+     vom weissen Grund abheben muss; dunkel gilt die umgekehrte Leiter. */
+  --chip-bereit-linie:              var(--o-blau);
+  --chip-keine-mietzahlung-linie:   var(--o-violett);
+  --chip-offen-linie:               var(--o-cyan);
+}

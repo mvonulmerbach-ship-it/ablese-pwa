@@ -6,17 +6,49 @@
 <title>Ablese-Erfassung</title>
 <meta name="description" content="Zählerstände erfassen und ans Ablese-Postfach übertragen.">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="theme-color" content="#3a63c0">
+<meta name="theme-color" content="#f9f8f7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ablesung">
+<!-- UI-Uebernahme 31.08.2026: beide Token-Dateien byte-gleich aus der
+     Mietverwaltung (frontend/). Die dunkle wirkt NUR unter
+     [data-theme="dark"] am <html>-Element — gesetzt von js/theme.js,
+     das im <head> laeuft, damit ein gemerktes dunkles Design ohne
+     hellen Blitz erscheint. -->
+<link rel="stylesheet" href="ui-tokens.css">
+<link rel="stylesheet" href="ui-tokens-dark.css">
 <link rel="stylesheet" href="app.css">
+<script src="js/theme.js"></script>
 </head>
 <body>
 <header>
-  <h1>Ablese-Erfassung</h1>
-  <p id="konto-zeile" class="konto-zeile" hidden></p>
+  <div class="kopf-titel">
+    <h1>Ablese-Erfassung</h1>
+    <p id="konto-zeile" class="konto-zeile" hidden></p>
+  </div>
+  <!-- Gleiche Bauart wie am Master: Mond in Ruhe, Sonne im Dunkelmodus,
+       Umschaltung in js/theme.js. -->
+  <button type="button" id="theme-umschalten" class="theme-umschalter" aria-pressed="false"
+          onclick="themeUmschalten()" title="Dunkles Design">
+    <svg class="ic-svg icon-mond" width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <svg class="ic-svg icon-sonne" width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2"></path><path d="M12 20v2"></path>
+      <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+      <path d="M2 12h2"></path><path d="M20 12h2"></path>
+      <path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+    </svg>
+  </button>
 </header>
 
 <main>
@@ -84,6 +116,7 @@
 </main>
 
 <script src="vendor/msal/msal-browser.min.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/config.js"></script>
 <script src="js/queue.js"></script>
 <script src="js/auth.js"></script>

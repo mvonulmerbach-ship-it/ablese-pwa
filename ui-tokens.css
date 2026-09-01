@@ -1,0 +1,1005 @@
+/* =============================================================================
+   UI_TOKENS_2026-08-05.css
+   Farb- und Basistokens für die Immobilienverwaltung (Web) — Light Mode
+
+   Zuarbeit — wird NICHT eingebunden. Übernahme erfolgt in Etappe U1 (1:1).
+   Dark Mode liegt in UI_TOKENS_DARK_2026-08-05.css (gleiche Namen, eigene Werte).
+
+   Aufbau:
+     (a) Basis-Palette      — rohe Farbwerte, nach Familie und Stufe benannt.
+     (b) Semantische Tokens — verweisen ausschließlich per var() auf (a).
+     (c) Status-Chips       — je Chip bg / text / punkt.
+     (d) Diagrammfarben     — kategoriale Reihe und sequenzielle Skala.
+     (e) Nicht-Farb-Tokens  — Radius, Schatten, Abstände.
+
+   Regel: Komponenten verwenden NUR (b) bis (e). Eine Stufe aus (a) steht nie
+   direkt in einer Komponente.
+
+   WICHTIG zu den Chips: Jeder Chip hat neben der Farbe eine FORM
+   (kreis / ring / raute / quadrat). Die Form ist keine Dekoration — sie trennt
+   „Gebucht“ von „Überfällig“ und „Hoch“ von „Mittel“, die unter Deuteranopie
+   farblich nicht auflösbar sind (ΔE 4,0 bzw. 3,8). Wer die Form weglässt,
+   nimmt rund 8 % der männlichen Nutzer die Unterscheidung.
+
+   Alle 118 Kombinationen sind gegen WCAG 2.1 AA geprüft, keine Fehlschläge.
+   Nachweis: UI_TOKENS_HERLEITUNG_2026-08-05.md
+   Farbwerte in OKLCH erzeugt, hier als sRGB-Hex abgelegt.
+   ============================================================================= */
+
+:root {
+
+  /* ==========================================================================
+     (a) BASIS-PALETTE
+     ========================================================================== */
+
+  --weiss: #ffffff;
+
+  /* --- Grau — WARM (Farbton 30-40), nicht mehr kuehl (Farbton 223). Das ist
+     die eigentliche Aenderung des hellen Modus: die Neutralen tragen rund 90 %
+     der Flaeche. Der Master kippt bei den dunklen Stufen ins Kuehle
+     (Farbton 210) — nachgemessen und uebernommen, nicht geglaettet. --- */
+  --grau-50:   #f9f8f7;   /* GEMESSEN 36,74 % — Seitengrund UND Seitenleiste */
+  --grau-100:  #f3f2f0;   /* GEMESSEN — Feldfuellung, eingebettete Flaeche */
+  --grau-200:  #eeece9;   /* GEMESSEN an der Kante — Karten- und Trennlinie */
+  --grau-300:  #e0dcd7;   /* ABGELEITET — Zwischenstufe */
+  --grau-400:  #c8c3bc;   /* ABGELEITET — Zwischenstufe */
+  --grau-500:  #9da2a7;   /* GEMESSEN — grauer Sekundaerknopf. NIE als Text */
+  --grau-600:  #656c73;   /* GEMESSEN — hellste Neutrale, die als Text AA traegt */
+  --grau-700:  #565d64;   /* ABGELEITET — Text schwach, eine Stufe unter 600 */
+  --grau-800:  #4a525a;   /* ABGELEITET */
+  --grau-850:  #414951;   /* ABGELEITET */
+  --grau-900:  #3d4650;   /* ABGELEITET — Text normal */
+  --grau-950:  #232d37;   /* GEMESSEN — Text stark */
+  --grau-pille: #2a2b2e;  /* GEMESSEN — aktiver Navigationspunkt, weiss darauf 14,16 */
+
+  /* --- Primaer — TEAL. Ersetzt das Indigo (Farbton 179). Handlungsfarbe des
+     hellen Modus; sie zieht NICHT in den Dunkelmodus (Variante A). --- */
+  --primaer-50:   #f0f9f9;   /* ABGELEITET */
+  --primaer-75:   #eaf6f6;   /* ABGELEITET — Auswahlflaeche */
+  --primaer-100:  #e2f0ef;   /* GEMESSEN — Hinweisflaeche */
+  --primaer-200:  #dce9e8;   /* GEMESSEN — stille Handlungsflaeche */
+  --primaer-300:  #cae0de;   /* GEMESSEN — Rand dazu */
+  --primaer-400:  #9fcbcb;   /* GEMESSEN — deaktivierte Primaeraktion */
+  --primaer-500:  #59a6a4;   /* ABGELEITET */
+  --primaer-600:  #28a09e;   /* ABGELEITET — Fokusring und Auswahlkante, 3,18 */
+  --primaer-700:  #11807e;   /* GEMESSEN — Primaeraktion als FLAECHE, weiss darauf 4,76 */
+  --primaer-750:  #0f7372;   /* ABGELEITET — Primaeraktion als SCHRIFT, 4,54 bis 5,65 */
+  --primaer-800:  #0c5a59;   /* ABGELEITET */
+  --primaer-900:  #0a4c4b;   /* ABGELEITET — Ueberfahren */
+
+  /* --- Akzent — VIOLETT des Masters. Ersetzt Bernstein/Kupfer (Max'
+     Entscheidung 3 vom 25.08.2026). Er traegt dort die Aufforderungsbanner und
+     eine Diagrammreihe; reine Werbeflaechen bleiben nach O-Konzept Abschnitt 9
+     draussen. --- */
+  --akzent-50:   #f7f5fa;   /* ABGELEITET */
+  --akzent-100:  #efebf5;   /* ABGELEITET */
+  --akzent-200:  #dfd7ea;   /* ABGELEITET */
+  --akzent-300:  #c7b8db;   /* ABGELEITET */
+  --akzent-400:  #ad97c9;   /* ABGELEITET */
+  --akzent-500:  #9274b8;   /* GEMESSEN — Bannerflaeche */
+  --akzent-600:  #7d5ea6;   /* ABGELEITET */
+  --akzent-700:  #69508a;   /* GEMESSEN — Dialogkopf, Diagrammreihe */
+  --akzent-800:  #594573;   /* ABGELEITET */
+  --akzent-900:  #493a5c;   /* GEMESSEN */
+
+  /* --- Info — der Master trennt den Hinweis NICHT von der Handlung; beides ist
+     dort Teal. Fuer uns waere das ein Verstoss gegen R2 (Farbe ist Bedeutung),
+     deshalb eine eigene kuehle Familie, Farbton 205. VORSCHLAG, nicht gemessen. --- */
+  --info-100:  #e5eef5;
+  --info-200:  #c9dbe9;
+  --info-500:  #408abf;
+  --info-600:  #2e6f9e;
+  --info-700:  #26597f;
+  --info-900:  #143852;
+
+  /* --- Erfolg — im Master NICHT VORHANDEN: ueber 92 Mio. Pixel steht kein
+     einziger nennenswerter Wert im Farbtonbereich 90-160. Hier steht Max'
+     Obsidian-Akzent (Entscheidung 1 vom 25.08.2026), damit hell und dunkel
+     wenigstens EINE Familie teilen. --- */
+  --erfolg-100:  #e8f3ec;
+  --erfolg-200:  #cee3d7;
+  --erfolg-500:  #5c9472;   /* Obsidian-Akzent, unveraendert */
+  --erfolg-600:  #487a5c;
+  --erfolg-700:  #3c674d;
+  --erfolg-900:  #264030;
+
+  /* --- Warnung — Gold. Flaeche gemessen, Rand und Schrift abgeleitet, weil der
+     gemessene Randwert gegen Weiss nur 1,62 erreicht. --- */
+  --warnung-100:  #fdf3e4;   /* GEMESSEN — Warnbanner-Flaeche */
+  --warnung-200:  #f9dbae;   /* ABGELEITET */
+  --warnung-500:  #c67d0f;   /* ABGELEITET aus #f5c377 — Rand und Symbol, 3,31 */
+  --warnung-600:  #b6720c;   /* ABGELEITET */
+  --warnung-700:  #9d630c;   /* ABGELEITET — Schrift, 4,97 auf Weiss */
+  --warnung-900:  #694207;   /* ABGELEITET */
+
+  /* --- Fehler — Farbton 345. Traegt ohne Ableitung. --- */
+  --fehler-100:  #fbf1f4;   /* GEMESSEN — Chipflaeche LEERSTAND */
+  --fehler-200:  #f3ced7;   /* ABGELEITET */
+  --fehler-500:  #dd3c64;   /* ABGELEITET */
+  --fehler-600:  #d11a48;   /* ABGELEITET */
+  --fehler-700:  #bc143d;   /* GEMESSEN — Randbalken, Chip-Schrift */
+  --fehler-900:  #770d28;   /* ABGELEITET */
+
+  /* --- Violett — eigene Familie fuer „Keine Mietzahlung". **Sie bleibt mit H1
+     unveraendert**, obwohl der Akzent oben jetzt ebenfalls violett ist: die
+     Zuarbeit fuehrt sie nicht, und der Chip braucht sie weiter. Die tatsaechlich
+     benutzten Stufen liegen 15 bis 22 dE auseinander (Chip-Punkt --violett-600
+     gegen --akzent-500/700) — derselbe Abstand, den das Projekt anderswo
+     akzeptiert. Eng beieinander liegt nur --violett-100 gegen --akzent-100
+     (dE 2,1), und --akzent-100 hat keinen Verbraucher. Wer dem Akzent eine
+     Flaechenstufe gibt, prueft diese Nachbarschaft zuerst. --- */
+  --violett-100:  #f6edf6;
+  --violett-200:  #eed9ef;
+  --violett-500:  #c37fc6;
+  --violett-600:  #a861ac;
+  --violett-700:  #8d4b91;
+  --violett-900:  #562859;
+
+  /* ==========================================================================
+     (b) SEMANTISCHE TOKENS — verweisen nur auf (a)
+     ========================================================================== */
+
+  /* --- Flächen — DIE LEITER, umgedreht mit E11 (v0.50.6) ------------------
+     Der Master hat in allen 76 Bildern den Inhaltsgrund WEISS und Karte,
+     Kachel, Feld und Tabellenfläche im warmen Hellgrau #F9F8F7 — derselbe
+     Wert wie die Seitenleiste (Zuarbeit UI_LAYOUT_SYSTEM Abschnitt 2, mit
+     Belegen; Regel R1 des Schablonen-Konzepts sagt wörtlich dasselbe).
+     Bis .50.5 stand es hier umgekehrt.
+
+     Drei Stufen, und der Grund liegt in der MITTE:
+       darüber   weiß      Dialog, Aufklapp-Panel, aktiver Segment-Knopf
+       Grund     weiß      der Inhaltsbereich der Seite
+       darunter  #F9F8F7   Leiste, Karte, Kachel, Feld, Tabellenfläche, Chip
+
+     Grund und „darüber" tragen im HELLEN denselben Wert und sind trotzdem
+     zwei Tokens: im DUNKLEN fallen sie auseinander (--o-bg1 gegen --o-bg2).
+     Kein Brücken-Fall nach U1 — die Werte sind nur hier gleich, nicht dort.
+
+     Ein Behälter ist immer die GEGENFLÄCHE seines Grundes (Abschnitt 2):
+     auf dem weißen Grund ist das Feld grau, im grauen Assistenten weiß.
+     Deshalb bleibt --flaeche-seite auch die Fläche einer stillen Einbettung
+     IN einem Behälter — es ist dieselbe Rolle, nicht eine zweite Quelle. */
+  --flaeche-seite:            var(--weiss);          /* E11 — der Inhaltsgrund; zugleich die
+                                                       Gegenfläche einer Behälterfläche */
+  --flaeche-card:             var(--grau-50);        /* E11 — Karte, Kachel, Tabellenfläche */
+  --flaeche-ueber:            var(--weiss);          /* E11 — die Ebene ÜBER dem Grund:
+                                                       Dialog, Aufklapp-Panel, aktiver
+                                                       Segment-Knopf, Auswahlkästchen */
+  --flaeche-leiste:           var(--grau-50);        /* UMKEHR H1 — die Leiste ist HELL, und
+                                                       mit E11 steht sie auf derselben Stufe
+                                                       wie Karte und Kachel: der Master führt
+                                                       sie in Abschnitt 2 in EINER Zeile mit
+                                                       ihnen. Bis .50.5 trug sie denselben
+                                                       Wert wie der Seitengrund und musste
+                                                       durch eine Kante abgesetzt werden;
+                                                       jetzt setzt sie ihre eigene Fläche ab */
+  --linie-leiste:             var(--linie);          /* H1 — die Kante zum Seitengrund. Sie
+                                                       BLEIBT: die A7-Regel .212 verlangt eine
+                                                       Absetzung, nicht notwendig eine eigene
+                                                       Fläche — jetzt trägt sie beides, und
+                                                       die Kante hält die Leiste auch dort
+                                                       lesbar, wo eine graue Karte direkt an
+                                                       sie stößt */
+  --flaeche-tabellenkopf:     var(--grau-50);        /* E11 — Kopfzeile von Tabellen. Sie hält
+                                                       ihre Beziehung zur Kartenfläche (bis
+                                                       .50.5 beide weiß, jetzt beide grau);
+                                                       getrennt wird durch die Grundlinie */
+  --flaeche-zeile-hover:      var(--weiss);          /* E11 — „Zeile eine Stufe heller"
+                                                       (Zuarbeit 5.1, Zustand Hover). Bis
+                                                       .50.5 war es eine Stufe DUNKLER, weil
+                                                       die Zeile weiß war. Die Richtung des
+                                                       Dunkelmodus (heller) stimmt jetzt mit
+                                                       der des hellen überein */
+  --flaeche-zeile-auswahl:    var(--primaer-200);    /* ausgewählte Tabellenzeile */
+  --flaeche-deaktiviert:      var(--grau-100);       /* gesperrte Felder und Schalter */
+
+  /* --- Text --- */
+  --text-stark:          var(--grau-950);       /* Überschriften, Beträge, Primärtext */
+  --text-normal:         var(--grau-900);       /* Fließtext, Tabelleninhalte */
+  --text-schwach:        var(--grau-700);       /* Labels, Hilfetexte, Sekundärzeilen */
+  --text-deaktiviert:    var(--grau-600);       /* Beschriftung gesperrter Elemente */
+  --text-invers:         var(--weiss);          /* auf dem Primärbutton und der Nav-Pille */
+  --text-positiv:        var(--erfolg-700);     /* positive Abweichung, Gutschrift */
+  --text-negativ:        var(--fehler-700);     /* negativer Betrag, Rücklastschrift */
+
+  /* --- Linien --- */
+  --linie:            var(--grau-200);       /* Tabellenzeilen, Card-Rahmen */
+  --linie-stark:      var(--grau-600);       /* Eingabefeld-Rahmen, aktive Trenner */
+  --linie-auswahl:    var(--primaer-700);    /* Markierungsbalken der ausgewählten Zeile und
+                                               Kante der gewählten Filter-Kachel. E11 --
+                                               dieselbe Rechnung wie beim Fokusring: auf der
+                                               grauen Kachel kam die 600er Stufe auf 2,99 */
+
+  /* --- Interaktion --- */
+  --aktion-primaer:          var(--primaer-700);    /* Primärbutton, FLÄCHE */
+  --aktion-primaer-schrift:  var(--primaer-750);    /* H1 — dieselbe Farbe als SCHRIFT:
+                                                       Link, Umriss-Knopf, Aufschrift auf
+                                                       dem stillen Sekundärknopf. Die
+                                                       Flächenstufe trägt dort nur 3,82 */
+  --aktion-primaer-hover:    var(--primaer-900);    /* Primärbutton, Hover */
+  --fokus-ring:              var(--primaer-700);    /* Fokusring. E11 -- eine Stufe tiefer:
+                                                       --primaer-600 trug gegen den weissen
+                                                       Grund 3,18, gegen die jetzt GRAUE
+                                                       Karte aber nur 2,99 und verfehlte
+                                                       WCAG 1.4.11 um einen Hundertstel.
+                                                       --primaer-700 traegt 4,76 und 4,49 --
+                                                       dieselbe Korrektur, die H1 fuer den
+                                                       Ring auf der hellen Leiste gemacht hat */
+  --fokus-schein:            var(--primaer-100);    /* weicher Schein um fokussierte Felder */
+
+  /* --- Seitenleiste — beide Werte kehren sich mit H1 um.
+     Die A7-Regel „maximaler Kontrast gegen den Grund“ bleibt unverändert; nur
+     ihr ERGEBNIS dreht mit, weil die Leiste jetzt hell ist. Der Dunkelmodus
+     bleibt davon unberührt (Max' Entscheidung 2 vom 25.08.2026). --- */
+  --leiste-text-ruhig:       var(--grau-900);       /* Navigationseintrag in Ruhe */
+  --leiste-flaeche-aktiv:    var(--grau-200);       /* ÜBERFAHRENER Eintrag (Hover) */
+  --leiste-text-aktiv:       var(--grau-950);       /* H1 — Schrift darauf. Bis .213 stand
+                                                       hier --text-invers (weiß); auf der
+                                                       jetzt HELLEN Leiste wäre das weiß auf
+                                                       hell — dieselbe Fehlerklasse, die
+                                                       .213 bei der Meldung gefunden hat */
+
+  /* ==========================================================================
+     (c) STATUS-CHIPS — je Chip Fläche, Schrift und Punkt.
+         Der Punkt trägt zusätzlich eine Form, siehe Kopf der Datei.
+     ========================================================================== */
+
+  /* Zahlungsabgleich */
+  --chip-bereit-bg:                  var(--primaer-100);
+  --chip-bereit-text:                var(--primaer-900);
+  --chip-bereit-punkt:               var(--primaer-700);      /* Form: ring — H1: die
+                                       600er-Stufe traegt auf der neuen Teal-Flaeche nur
+                                       2,71; die 700er kommt auf 4,07 */
+  --chip-gebucht-bg:                 var(--erfolg-100);
+  --chip-gebucht-text:               var(--erfolg-900);
+  --chip-gebucht-punkt:              var(--erfolg-600);      /* Form: kreis */
+  --chip-ohne-vorschlag-bg:          var(--grau-200);
+  --chip-ohne-vorschlag-text:        var(--grau-900);
+  --chip-ohne-vorschlag-punkt:       var(--grau-700);      /* Form: ring */
+  --chip-keine-mietzahlung-bg:       var(--violett-100);
+  --chip-keine-mietzahlung-text:     var(--violett-900);
+  --chip-keine-mietzahlung-punkt:    var(--violett-600);      /* Form: quadrat */
+  --chip-ueberfaellig-bg:            var(--fehler-100);
+  --chip-ueberfaellig-text:          var(--fehler-900);
+  --chip-ueberfaellig-punkt:         var(--fehler-600);      /* Form: raute */
+
+  /* Aufgaben */
+  --chip-offen-bg:                   var(--info-100);
+  --chip-offen-text:                 var(--info-900);
+  --chip-offen-punkt:                var(--info-600);      /* Form: ring */
+  --chip-erledigt-bg:                var(--erfolg-100);
+  --chip-erledigt-text:              var(--erfolg-900);
+  --chip-erledigt-punkt:             var(--erfolg-600);      /* Form: kreis */
+
+  /* Priorität */
+  --chip-hoch-bg:                    var(--fehler-100);
+  --chip-hoch-text:                  var(--fehler-900);
+  --chip-hoch-punkt:                 var(--fehler-600);      /* Form: raute */
+  --chip-mittel-bg:                  var(--warnung-100);
+  --chip-mittel-text:                var(--warnung-900);
+  --chip-mittel-punkt:               var(--warnung-600);      /* Form: ring */
+  --chip-niedrig-bg:                 var(--grau-200);
+  --chip-niedrig-text:               var(--grau-900);
+  --chip-niedrig-punkt:              var(--grau-700);      /* Form: ring */
+
+  /* ==========================================================================
+     (d) DIAGRAMMFARBEN — kategoriale Reihe in FESTER Reihenfolge, nie
+         zyklisch weiterverwendet. Ab der 9. Reihe: „Sonstige“ zusammenfassen
+         oder auf mehrere kleine Diagramme aufteilen.
+         Bewusst getrennt von den Status-Farben: eine Datenreihe darf nie
+         aussehen wie ein Status.
+
+         **Die Kontraste sind bewusst GESPREIZT (3,4 bis 11,5), nicht
+         angeglichen** (H1, Max' Entscheidung 5 vom 25.08.2026). Gleicher
+         Kontrast heisst gleiche Helligkeit — und Helligkeit ist genau der
+         Kanal, ueber den dichromatisches Sehen trennt, wenn der Farbton
+         ausfaellt. Die zuvor geplante gleich-kontrastige Reihe kam bei acht
+         Reihen auf einen Farbabstand von dE 2,2 unter Deuteranopie; diese
+         kommt auf 8,1 bei acht und 20,8 bei sechs Reihen. Die Reihenfolge ist
+         GERECHNET, nicht gewaehlt: die ersten k Farben liegen maximal
+         auseinander, denn ein Diagramm zeigt fast nie acht Reihen.
+
+         Und die unbequeme Wahrheit dazu: acht Reihen rettet auch die beste
+         Anordnung nicht. Wer acht zeichnet, braucht zusaetzlich Strichart,
+         Markerform oder direkte Beschriftung — dieselbe Einsicht, die bei den
+         Status-Chips zur FORM gefuehrt hat.
+     ========================================================================== */
+  --diagramm-1: #c37b0f;   /* Gold — Farbton gemessen */
+  --diagramm-2: #634886;   /* Violett dunkel */
+  --diagramm-3: #4a8864;   /* Gruen — aus dem Obsidian-Akzent */
+  --diagramm-4: #8b4a28;   /* Ziegel */
+  --diagramm-5: var(--primaer-700);   /* Teal — die Handlungsfarbe SELBST.
+                             Die Konzept-Reihe schreibt hier #117f7e und sagt
+                             zugleich „gemessen, unveraendert"; gemessen ist
+                             #11807e (so auch achtmal im selben Dokument). Statt
+                             die Abweichung von einer Ziffer zu uebernehmen oder
+                             zu korrigieren, steht hier der VERWEIS — dann ist
+                             „unveraendert" strukturell wahr und kann nicht
+                             auseinanderlaufen. Zwei fast gleiche Tealtoene
+                             nebeneinander waeren genau die Fehlerklasse, die
+                             dieses Kapitel behandelt. */
+  --diagramm-6: #5c2353;   /* Magenta dunkel */
+  --diagramm-7: #274868;   /* Blau dunkel */
+  --diagramm-8: #cb1543;   /* Rot — gemessen */
+
+  /* Sequenzielle Skala — sechs Stufen aus der Handlungsfarbe (Teal). */
+  --diagramm-seq-1: #e4f6f6;
+  --diagramm-seq-2: #c2ebea;
+  --diagramm-seq-3: #94dbda;
+  --diagramm-seq-4: #5ec9c8;
+  --diagramm-seq-5: #37a4a3;
+  --diagramm-seq-6: #246b6a;
+
+  /* ==========================================================================
+     (e) NICHT-FARB-TOKENS
+     ========================================================================== */
+
+  /* Radius — MASTER-MASSE ab v0.49.212 (Max' Entscheidung 25.08.2026).
+     Bis .211 standen hier 8/12/16 px; die PrimeVue-Variablen der Vorlage
+     führen 2/4/6/8/12 px, und Max hat entschieden, sie für BEIDE Modi zu
+     übernehmen. Damit wird die ganze Oberfläche kantiger — die Radius-
+     Entscheidung vom 24.08. („gerundet statt kantig", R9) bleibt in der
+     RICHTUNG bestehen, nur das Mass kommt jetzt aus dem Master.
+     Übernommen werden die drei Stufen, die auch Verbraucher haben; die
+     äusseren beiden (2 px, 12 px) entstehen nicht auf Vorrat (U1).
+     --radius-s ist für Chips, Buttons und Eingabefelder gedacht,
+     --radius-m/--radius-l für Karten und Dialoge. */
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --radius-l: 8px;
+  /* v0.50.4 (G1, E8): die vierte Stufe. Bis .213 galt sie als Vorrat --
+     mit der Platzhalterkarte hat sie jetzt einen Verbraucher. */
+  --radius-xl: 12px;
+
+  /* Schatten — flach und blaustichig, damit er auf --flaeche-seite nicht
+     schmutzig wirkt. */
+  --schatten-card: 0 1px 2px rgb(41 46 55 / 0.06), 0 2px 8px rgb(41 46 55 / 0.05);
+
+  /* Abstände — 4-px-Raster */
+  --abstand-1: 4px;
+  --abstand-2: 8px;
+  --abstand-3: 12px;
+  --abstand-4: 16px;
+  --abstand-5: 24px;
+  --abstand-6: 32px;
+  --abstand-7: 48px;
+  --abstand-8: 64px;
+  /* ==========================================================================
+     (f) FORMULAR-OPTIK — Etappe O-A1 (24.08.2026)
+
+     Nachtrag zur Zuarbeit vom 05.08.2026. Die Designsprache aus
+     UI_SCHABLONEN_KONZEPT_2026-08-24.md legt das Formularfeld fest
+     (Abschnitt 4.1, Regeln R1/R4/R9): Beschriftung UEBER dem Feld, klein und
+     grau; das Feld eine gefuellte Flaeche OHNE Rahmen, weich gerundet.
+
+     Warum die Flaeche traegt und nicht der Rahmen (R1): das leere Feld ist
+     ein Behaelter, der auf seine Fuellung wartet — es ist nicht „vertieft“,
+     sondern noch nicht aktiv. Deshalb liegt es eine Ebene UNTER der Karte,
+     und im Fokus rueckt es eine Ebene DARUEBER (6.2). Die Dark-Fassung dreht
+     die Richtung nicht um, sie verkleinert nur die Abstaende (6.6).
+
+     KEINE neue Farbe: jeder Farbwert hier ist ein Verweis in die
+     Basis-Palette (a) von oben. Die Farbwelt bleibt unveraendert — neu sind
+     nur Form, Flaeche, Abstand und Schriftgroesse.
+     ========================================================================== */
+
+  /* --- Flaechen, Text und Kanten des Felds --- */
+  --feld-flaeche:              var(--grau-300);   /* H1 — FUENFTE gerechnete
+                                 Ableitung, derselben Art wie die vier des Konzepts:
+                                 der Master misst die Feldfuellung als grau-100, und
+                                 sie traegt gegen die weisse Karte nur 1,12 (grau-200:
+                                 1,18). Der Ebenen-Waechter aus .204 verlangt 1,2 —
+                                 grau-300 kommt auf 1,37. Nur die Helligkeit wandert,
+                                 Farbton und Saettigung bleiben. */
+  --feld-flaeche-fokus:       var(--weiss);        /* Fokus: eine Ebene heller (6.2) */
+  --feld-flaeche-deaktiviert: var(--grau-100);     /* gesperrt: kontrastaermer, nicht dunkler */
+  --feld-text:                var(--grau-950);     /* der eingetragene Wert */
+  --feld-text-platzhalter:    var(--grau-800);     /* Beispiel, kein Wert */
+  --feld-label:               var(--grau-700);     /* Beschriftung ueber dem Feld */
+  --feld-pflicht:             var(--fehler-700);   /* Pflichtstern am Label */
+  --feld-fokus-kontur:        var(--primaer-700);  /* Kontur in der Handlungsfarbe (6.2).
+                                                     E11 -- eine Stufe tiefer, wie
+                                                     --fokus-ring und aus demselben Grund:
+                                                     2,99 auf der grauen Karte */
+  --feld-fehler-kante:        var(--fehler-600);   /* Kante links am Feld (6.1) */
+  --feld-fehler-text:         var(--fehler-700);   /* Ursache + naechster Schritt */
+
+  /* --- Schalter statt Kaestchen fuer Ja/Nein (4.1) ---
+     Die STELLUNG des Knopfes ist die zweite Codierung neben der Farbe —
+     dieselbe Anforderung wie die FORM des Chip-Punktes (siehe Kopf). --- */
+  --feld-schalter-aus:        var(--grau-600);
+  --feld-schalter-an:         var(--primaer-700);
+  --feld-schalter-knopf:      var(--weiss);
+
+  /* --- Masse des Formulars. Nur der Teil der Typo- und Abstandsskala, den
+     Formulare brauchen; der Rest (Seitentitel, Kennzahlen, Tabellenzeilen)
+     ist ausdruecklich NICHT hier. --- */
+  /* Vollrundung (R9: was fluechtig und einzeln wegwerfbar ist). Vervoll-
+     staendigt die Radius-Familie aus (e), die nur s/m/l fuehrt. */
+  --radius-voll:              999px;
+
+  --feld-radius:              var(--radius-s);
+  /* v0.50.4 (G1, E3): 38 px war eine Schaetzung aus A1, 42 px ist die
+     in 40 Master-Bildern gemessene Zahl. Max' Entscheidung 25.08.2026. */
+  --feld-hoehe:               42px;
+  --feld-polster-x:           12px;
+  --feld-polster-y:           8px;
+  /* Seit R1 aus der Skala (m) statt als eigene Zahl — sonst waere die
+     Formularschrift die einzige Groesse, die Max' 110 % nicht mitmacht. */
+  --feld-schrift:             var(--schrift-l);
+  --feld-label-schrift:       var(--schrift-l);   /* B6 -- 15,4 px, Master 120800:
+                                                     das Feldlabel steht auf derselben
+                                                     Stufe wie die Tabellenzelle, nicht
+                                                     darunter */
+  --feld-label-abstand:       var(--abstand-1);    /* Label -> Feld */
+  --feld-abstand:             var(--abstand-4);    /* Feld -> naechstes Feld */
+  --feld-fehler-kante-breite: 3px;
+  --feld-fokus-kontur-breite: 2px;
+  --feld-schalter-breite:     40px;
+  --feld-schalter-hoehe:      22px;
+
+  /* ==========================================================================
+     (g) LEERZUSTAND UND LADEZUSTAND — Etappe O-A3 (24.08.2026)
+
+     UI_SCHABLONEN_KONZEPT_2026-08-24.md, Regel R6 und Ableitung 6.3. Ein
+     Leerzustand ist kein Loch, sondern eine Aussage: er nennt seine Ursache
+     und den naechsten Schritt. Vier Diagnosen (Filter zu eng · nichts
+     angelegt · Ursache woanders · Ladefehler), gezeichnet an EINER Stelle.
+
+     Warum das Symbol seine eigene, gedaempfte Farbe bekommt: es ist die
+     ZWEITE Codierung neben dem Text (dieselbe Anforderung wie die FORM des
+     Chip-Punktes seit U2) und darf den Text trotzdem nicht ueberstimmen —
+     4.5 verlangt "grau und schlicht, Ton sachlich, keine Dramatik". Auch der
+     Ladefehler bleibt deshalb grau: die Farbe Rot ist fuer ZUSTAENDE von
+     Daten reserviert (R2), nicht fuer das Scheitern einer Abfrage.
+
+     Der Ladezustand (6.3) sind Skelett-Zeilen IN der Behaelterflaeche, kein
+     Spinner: nach R1 steht die Struktur schon, nur die Fuellung fehlt. Der
+     Balken liegt deshalb genau eine Ebene unter der Karte — dieselbe Flaeche
+     wie das ruhende Formularfeld aus (f).
+
+     KEINE neue Farbe: jeder Farbwert hier ist ein Verweis in die
+     Basis-Palette (a) bzw. in die Anwendungs-Tokens darueber.
+     ========================================================================== */
+
+  --leer-symbol:              var(--grau-600);     /* grau und schlicht (4.5) */
+  --leer-titel:               var(--grau-900);     /* die Aussage */
+  --leer-text:                var(--grau-800);     /* Begruendung bzw. Weg */
+  --leer-flaeche:             var(--grau-50);      /* E11 -- der Leerzustand steht IN der
+                                                     Tabellenflaeche (Zuarbeit 5.1), also auf
+                                                     der Behaelterstufe, nicht auf dem Grund */
+  --leer-linie:               var(--grau-300);
+  --leer-polster:             var(--abstand-6);
+  --leer-polster-innen:       var(--abstand-5);    /* schon in einer Karte */
+  --leer-abstand:             var(--abstand-2);
+  --leer-symbol-groesse:      28px;
+
+  --skelett-balken:           var(--grau-200);     /* eine Ebene unter der Karte -- mit E11
+                                                     ist die Karte grau-50, der Balken bleibt
+                                                     die naechste Stufe darunter */
+  --skelett-hoehe:            12px;
+  --skelett-abstand:          var(--abstand-3);
+  --skelett-radius:           var(--radius-s);
+
+  /* ==========================================================================
+     (h) ASSISTENT — Etappe O-A4 (24.08.2026)
+
+     UI_SCHABLONEN_KONZEPT_2026-08-24.md, Muster 4.3 und Regel R10
+     („Struktur zeigen, nicht erzwingen“). Die Leiste sagt, WIE WEIT man ist —
+     nicht, wo man ist; das beantwortet die Reiter-Leiste aus U7.
+
+     Drei Zustaende, drei Rollen (R2: Farbe ist Bedeutung):
+       erledigt  bestaetigend (Erfolgsfarbe) — der Schritt liegt hinter dir
+       aktiv     Handlungsfarbe — hier bist du gerade
+       offen     gedaempft — noch nicht dran
+     Dazu ein vierter, `gesperrt`, fuer einen Schritt, den es in DIESEM
+     Assistenten nicht gibt: er wird BENANNT statt weggelassen (Regel .139/
+     .141) und traegt deshalb dieselbe Daempfung wie „offen“, aber ohne Zahl.
+
+     Der Punkt traegt immer ein ZEICHEN (Haken, Punkt oder die Schrittzahl) —
+     die zweite Codierung neben der Farbe, dieselbe Anforderung wie die FORM
+     des Chip-Punktes seit U2.
+
+     KEINE neue Farbe: jeder Farbwert hier ist ein Verweis in die
+     Basis-Palette (a) bzw. in die Anwendungs-Tokens.
+     ========================================================================== */
+
+  /* Erfolg-700 statt -600: auf -600 traegt Weiss nur 3,7:1 und faellt damit
+     unter die Textschwelle von 4,5:1. Nachgerechnet, nicht gewaehlt. */
+  --as-erledigt-flaeche:      var(--erfolg-700);
+  --as-erledigt-text:         var(--weiss);
+  --as-erledigt-linie:        var(--erfolg-700);
+  --as-aktiv-flaeche:         var(--primaer-700);
+  --as-aktiv-text:            var(--weiss);
+  --as-aktiv-beschriftung:    var(--grau-950);
+  --as-offen-flaeche:         var(--grau-200);
+  --as-offen-text:            var(--grau-800);
+  --as-offen-linie:           var(--grau-300);
+  --as-beschriftung:          var(--grau-800);
+  --as-pflicht-flaeche:       var(--grau-100);
+  --as-pflicht-text:          var(--grau-900);
+
+  /* v0.50.4 (G1): der Master misst den Ring des AKTUELLEN Schritts mit 14 px
+     und den eines kuenftigen mit 10 (120245) -- er trennt also, was hier EINE
+     Groesse ist. Die Master-Masse stehen als Beleg im Block (o); umgestellt
+     ist hier nichts, weil die waagerechte Assistenten-Leiste aus A4 mit ihren
+     28 px in Gebrauch ist und ein Wechsel eine eigene Etappe waere. */
+  --as-punkt-groesse:         28px;
+  --as-abstand:               var(--abstand-2);
+  --as-linie-staerke:         2px;    /* GEMESSEN 120245 -- der Master bestaetigt den A4-Wert */
+
+  /* ==========================================================================
+     (i) DETAILSEITE — Etappe O-A5 (25.08.2026)
+
+     UI_SCHABLONEN_KONZEPT_2026-08-24.md, Muster 4.6/4.7 und Regel R7.
+
+     Drei Bausteine, drei Aussagen:
+       Abschnitts-Karte   ein Abschnitt einer Detailseite. Ihr Kopf liegt
+                          eine Stufe unter der Karte — R1: die Ueberschrift
+                          ist kein eigenes Element, sie ist eine FLAECHE.
+       Platzhalter-Karte  gestrichelt. „Hier gehoert etwas hin“, nicht „hier
+                          ist etwas kaputt“ — deshalb die gedaempfte
+                          Linienfarbe und ausdruecklich KEIN Fehlerton.
+       Auswahl-Zeile      eine anklickbare Listenzeile; ihre Statuskante
+                          nimmt die Farbe aus der ROLLE (U2), nicht aus einem
+                          eigenen Wert.
+
+     KEINE neue Farbe: jeder Farbwert hier ist ein Verweis.
+     ========================================================================== */
+
+  --karte-kopf-flaeche:       var(--grau-100);
+  --karte-titel:              var(--grau-950);
+  --karte-erklaerung:         var(--grau-800);
+  --karte-linie:              var(--grau-300);
+  --karte-tat:                var(--aktion-primaer-schrift);   /* H1 — die Flaechenstufe
+                                traegt auf dem Kartenkopf nur 4,25; die Schriftstufe 5,2 */
+  --karte-polster:            var(--abstand-4);
+  --karte-abstand:            var(--abstand-5);
+
+  /* Grau-600 statt -400: die gestrichelte Linie IST die Aussage („hier
+     gehoert etwas hin“) und muss deshalb wahrnehmbar sein — 3:1 gegen ihren
+     eigenen Grund. Nachgerechnet, nicht gewaehlt. */
+  --platz-linie:              var(--grau-600);
+  --platz-flaeche:            var(--grau-50);
+  --platz-titel:              var(--grau-900);
+  --platz-text:               var(--grau-800);
+  --platz-strich:             6px 4px;
+
+  --zeile-flaeche:            var(--grau-50);
+  --zeile-flaeche-hover:      var(--grau-100);
+  --zeile-kante-breite:       3px;
+  --zeile-polster-x:          var(--abstand-3);
+  --zeile-polster-y:          var(--abstand-2);
+
+  /* ==========================================================================
+     (j) DIAGRAMM-WERKZEUGE — Etappe O-A6 (25.08.2026)
+
+     UI_SCHABLONEN_KONZEPT_2026-08-24.md, Muster 4.8 und Regel R5.
+
+     Die Leiste ueber einem Diagramm traegt die Umschalter (R5: dieselbe
+     Kachel ist Einstieg in mehrere Auswertungen) und das Ausgabe-Menue. Ihre
+     FELDER sind die Formularfelder aus A1 — hier stehen deshalb nur die
+     Masse der Leiste und die Flaechen des Menues.
+
+     Der Tooltip (4.8) ist bewusst DUNKEL, in beiden Modi: er schwebt ueber
+     dem Inhalt und muss sich von allem abheben, was darunter liegt. Das ist
+     dieselbe Entscheidung wie beim Toast seit v0.28 — und der einzige Ort im
+     System, an dem die Hell/Dunkel-Leiter absichtlich NICHT gilt.
+
+     KEINE neue Farbe: jeder Farbwert hier ist ein Verweis.
+     ========================================================================== */
+
+  --dw-abstand:               var(--abstand-3);
+  --dw-menue-flaeche:         var(--weiss);
+  --dw-menue-linie:           var(--grau-300);
+  --dw-menue-text:            var(--grau-900);
+  --dw-menue-hover:           var(--grau-100);
+  --dw-menue-breite:          180px;
+
+  --dgt-flaeche:              var(--grau-950);
+  --dgt-text:                 var(--weiss);
+  --dgt-name:                 var(--grau-300);
+  --dgt-punkt-groesse:        8px;
+
+
+  /* ==========================================================================
+     (k) SEITENLEISTE — Etappe O-A7 (25.08.2026)
+
+     Muster 4.9 und Regel R2. Die wichtigste Aussage des Konzepts steckt in
+     zwei Zeilen: „wo bin ich“ ist KEINE Handlung und darf die Handlungsfarbe
+     nicht mitbenutzen. Bis .210 trug der aktive Punkt genau sie (die
+     Leisten-Flaeche primaer-800) plus einen Balken in der AKZENT-Farbe — also
+     zwei Rollen, von denen keine „Ort“ heisst.
+
+     Die Regel lautet: **maximaler Kontrast gegen den Grund**, neutral statt
+     Primaer oder Akzent (Max' Wahl 25.08.2026). Bis .213 war die Leiste in
+     BEIDEN Modi dunkel, das Ergebnis also hell.
+
+     **Mit H1 (v0.50.3) ist die helle Leiste hell** — und dieselbe Regel dreht
+     ihr Ergebnis um: dunkle Flaeche, weisse Schrift (`--grau-pille`, gemessen
+     am Master, Kontrast 14,16). Die REGEL ist unveraendert, nur ihr Ergebnis
+     folgt dem Grund. Im Dunkelmodus bleibt alles, wie es war — dort steht in
+     `ui-tokens-dark.css` weiterhin die helle Flaeche (Max' Entscheidung 2 vom
+     25.08.2026 gilt ausdruecklich nur dem hellen Modus).
+
+     Die Abschnitts-Ueberschriften kleben beim Scrollen und brauchen deshalb
+     eine eigene, deckende Flaeche — sonst schiebt sich der Text darunter
+     durch. Sie ist bewusst der Leisten-Grund selbst.
+
+     Das „+ Neu“-Menue traegt dieselben Werte wie das Ausgabe-Menue aus A6:
+     was schwebt, sieht ueberall gleich aus. Bewusst ein eigener Namenssatz
+     statt einer Mitbenutzung von (j) — `--dw-` heisst Diagramm-Werkzeuge und
+     wuerde in der Leiste in die Irre fuehren.
+
+     KEINE neue Farbe: jeder Farbwert hier ist ein Verweis.
+     ========================================================================== */
+
+  --nav-ort-flaeche:          var(--grau-pille);
+  --nav-ort-text:             var(--weiss);
+  --nav-abschnitt-flaeche:    var(--grau-50);
+
+  /* E11-Nebenbefund, gefunden vom neuen CSS-Waechter: die weisse Aufschrift
+     trug auf --primaer-600 nur 3,18 und auf der HOVER-Stufe --primaer-500
+     sogar 2,83. Der primaere Knopf der Anwendung (.btn.primary) steht seit
+     jeher auf --aktion-primaer (= --primaer-700, 4,76) und verdunkelt beim
+     Ueberfahren; der Neu-Knopf der Leiste ist derselbe Knopf und folgt jetzt
+     derselben Rechnung. Nicht von E11 verursacht -- nur von E11 sichtbar
+     gemacht: kein Test hat die CSS-Regeln der index.html je nachgerechnet. */
+  --nav-neu-flaeche:          var(--primaer-700);
+  --nav-neu-flaeche-hover:    var(--primaer-900);
+  --nav-neu-text:             var(--weiss);
+
+  --nav-menue-flaeche:        var(--weiss);
+  --nav-menue-linie:          var(--grau-300);
+  --nav-menue-text:           var(--grau-900);
+  --nav-menue-hover:          var(--grau-100);
+
+  /* ==========================================================================
+     (l) SCHRIFT — Dark-Fundament, v0.49.212 (Max' Entscheidung 25.08.2026)
+
+     Der UI-Master laedt KEINE eigene Schrift; er nimmt die des Systems. Der
+     Stack steht hier woertlich so, wie Max ihn am 25.08.2026 aus der
+     laufenden Vorlage ausgelesen hat (getComputedStyle(document.body)) — auf
+     seinen Windows-Rechnern loest er zu Segoe UI auf.
+
+     Damit faellt Chivo aus der Oberflaeche (bis .211 die Schrift der ganzen
+     Anwendung, lokal gehostet seit v0.48.26). Die woff2-Dateien und
+     `vendor/fonts.css` BLEIBEN liegen — sie sind der Offline-Nachweis, den
+     `test_offline_vendoring_v0_48_26.py` prueft, und `JetBrains Mono` wird
+     dort weiter gebraucht. Geladen wird Chivo nicht mehr: eine Systemschrift
+     laedt gar nichts, die Offline-Faehigkeit wird also besser, nicht
+     schlechter.
+
+     WARUM DIESE TOKENS HIER STEHEN und nicht in der Dark-Datei: die Zuarbeit
+     fuehrt sie in ihrem Abschnitt (f) INNERHALB von [data-theme="dark"] —
+     dort waere die Schriftart modusabhaengig, und die Anwendung traege im
+     Hellen weiter Chivo. Die Schrift ist modusunabhaengig; sie gehoert
+     deshalb in die Basis-Datei (dieselbe Regel wie die Masse, .204).
+
+     ANGEWANDT wird an drei Stellen im <style> der index.html: die
+     Preflight-Regel `html` und die Utility `.font-serif` (beide stehen im
+     vorkompilierten `vendor/tailwind.css`, das byte-gleich bleiben muss, U1)
+     sowie `.num`. Das Konzept nannte in Abschnitt 5.1 nur zwei davon und
+     dazu die `body`-Regel — die traegt gar keine Schriftfamilie.
+     ========================================================================== */
+
+  --schrift-familie: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --schrift-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  /* ==========================================================================
+     (m) SCHRIFTGROESSEN — R-Serie „UI relativieren", Etappe R1 (25.08.2026)
+
+     Quelldokument: UI_RELATIVIERUNG_KONZEPT_2026-08-25.md, Abschnitt 5.
+
+     Bis .212 stand die Groesse 222-mal als Zahl im Quelltext (71-mal in der
+     index.html, 151-mal im JS) — in dreizehn verschiedenen Werten, von denen
+     200 Deklarationen auf ganze VIER entfielen (10/11/12/13 px). Das ist
+     keine Absicht, sondern Entstehungsgeschichte. Die Skala fuehrt sie auf
+     sieben Stufen zusammen; zwei Werte mit derselben ROLLE werden dabei
+     bewusst vereinheitlicht (10 px geht in 11 px auf, 15 px in 14 px,
+     18 px in 16 px, 32 px in 22 px, 38 px in 40 px).
+
+     WARUM rem UND NICHT px: die Skala haengt an EINER Stelle, `html`. Max'
+     Vorgabe „110 %" (sein Obsidian laeuft auf 18 px, das sind 112,5 %) wird
+     dort gesetzt und skaliert alles mit — Anwendung, Tailwind-Utilities und
+     Inline-Stile gleichzeitig. Die rem-Werte sind so gewaehlt, dass die
+     Optik bei `html { font-size: 16px }` unveraendert waere; die 110 % sind
+     der bewusste, an EINER Stelle umkehrbare Aufschlag.
+
+     Die MASSE (Abstaende, Radien, Hoehen) bleiben px und wachsen NICHT mit —
+     das ist kein Versehen: dieser Umbau ist die Entkopplung von Farbe,
+     Schrift und Groesse, kein Layout-Umbau (Konzept Abschnitt 8).
+     ========================================================================== */
+
+  --schrift-xs:   0.6875rem;   /* 12,1 px — Chip-Beschriftung, Achsen, Fusszeilen */
+  --schrift-s:    0.75rem;     /* 13,2 px — Labels, Hilfetexte, Sekundaerzeilen  */
+  --schrift-m:    0.8125rem;   /* 14,3 px — Tabellen- und Listeninhalte          */
+  --schrift-l:    0.875rem;    /* 15,4 px — Fliesstext, Formularwerte            */
+  --schrift-xl:   1.125rem;    /* 19,8 px — Abschnitts- und Kartentitel          */
+  --schrift-2xl:  1.5rem;      /* 26,4 px — Kennzahlen                           */
+  --schrift-3xl:  2.25rem;     /* 39,6 px — die eine grosse Zahl einer Kachel    */
+
+  /* ==========================================================================
+     (n) MELDUNG, PILLE, MARKE UND DIE WEICHEN STATUSFLAECHEN — R1
+
+     Diese Tokens standen bis .212 im Bruecken-Block der `index.html`. Sie
+     sind mit R1 hierher gezogen, und der Grund ist mechanisch: eine
+     Deklaration im <style> der Seite steht NACH `ui-tokens-dark.css` und
+     traegt dieselbe Spezifitaet — sie laesst sich von dort aus nicht
+     ueberschreiben. Genau deshalb hatten diese Tokens als einzige der
+     benutzten Farb-Tokens KEINE Dunkelfassung, und genau das war die
+     Ursache fuer „mal grau, mal weiss, kein System": der Knopf benutzte ein
+     ueberschriebenes Token, die Zeile daneben nicht.
+
+     ZWEI ROLLENTRENNUNGEN sind dabei faellig geworden (Konzept Abschnitt 4:
+     ein Wert in zwei Rollen wird GESPALTEN, nicht vereinheitlicht):
+
+     (1) Die Meldung (Toast) hat eine eigene SCHRIFT bekommen. Bis .212
+         schrieb sie `.text-paper`, also `--text-invers` — und das ist im
+         Dunklen seit .212 der dunkle Grundton (die Handlungsfarbe hellt dort
+         auf, die Schrift darauf wird dunkel). Auf der dunklen Meldung waere
+         das dunkel auf dunkel gewesen. `.text-paper` hat ausserhalb der
+         Meldung keinen einzigen Verbraucher und ist deshalb schlicht das,
+         was es tatsaechlich ist: die Schrift der Meldung.
+
+     (2) `--flaeche-positiv` trug drei Rollen: Fortschrittsbalken, gruene
+         Meldungsflaeche und — ueber `.text-accent2` — eine SCHRIFTfarbe.
+         Als Schrift auf Weiss erreicht Erfolg-600 nur 3,71 und verfehlt AA;
+         `.text-accent2` zieht deshalb auf `--text-positiv` (5,16).
+         Nachgerechnet, nicht gewaehlt.
+
+     Aus demselben Grund tragen die beiden farbigen Meldungen im HELLEN die
+     700er-Stufe: Weiss auf Erfolg-600 sind 3,71 und auf Fehler-600 4,29 —
+     beide unter AA. Auf Erfolg-700 sind es 5,16, auf Fehler-700 5,96.
+     ========================================================================== */
+
+  /* --- Meldung (Toast) und der Schleier hinter der Schublade --- */
+  --flaeche-toast:          var(--grau-950);    /* dunkle Meldungsflaeche, in BEIDEN Modi dunkel */
+  --flaeche-toast-ok:       var(--erfolg-700);  /* Erfolgsmeldung  — 5,16 mit der Meldungsschrift */
+  --flaeche-toast-fehler:   var(--fehler-700);  /* Fehlermeldung   — 5,96 mit der Meldungsschrift */
+  --text-toast:             var(--weiss);       /* die Schrift der Meldung (.text-paper) */
+
+  /* --- Weiche Statusflaechen und -linien --- */
+  --flaeche-positiv:        var(--erfolg-600);  /* Fortschrittsbalken (Flaeche, kein Text) */
+  --flaeche-negativ:        var(--fehler-100);  /* weiche Fehlerflaeche (.btn.danger:hover) */
+  --linie-negativ:          var(--fehler-200);
+  --text-negativ-leise:     var(--fehler-600);
+  --text-warnung:           var(--warnung-700); /* Warn-TEXT auf hellem Grund */
+
+  /* --- Akzent: der warme Gegenpol. Bewusst NICHT die Primaerfarbe --- */
+  --aktion-akzent:          var(--akzent-700);  /* Akzent-Schalter, Flaeche */
+  --aktion-akzent-hover:    var(--akzent-800);
+  --linie-akzent:           var(--akzent-500);  /* Balken, aktive Unterstreichung */
+  --linie-akzent-leise:     var(--akzent-500);  /* Fokusring auf der Leiste — H1: die
+                              400er-Stufe traegt auf der jetzt HELLEN Leiste nur 2,46,
+                              die 500er kommt auf 3,66 (WCAG 1.4.11) */
+  --marke-flaeche:          var(--akzent-300);  /* Abzeichen und Highlighter */
+  --marke-text:             var(--primaer-900);
+
+  /* --- Pillen (Ja/Nein-Merkmale in Listen) --- */
+  --pill-ok-flaeche:        var(--erfolg-100);
+  --pill-ok-text:           var(--erfolg-900);
+  --pill-ok-linie:          var(--erfolg-200);
+  --pill-warn-flaeche:      var(--warnung-100);
+  --pill-warn-text:         var(--warnung-900);
+  --pill-warn-linie:        var(--warnung-200);
+
+  /* ==========================================================================
+     (o) DIE LEISESTE TEXTSTUFE UND DIE DREI ABDUNKLUNGEN — R-Serie, R2
+
+     Vier Rollen, fuer die es bis .212 kein Token gab. Sie entstehen NICHT auf
+     Vorrat: jede hat ihre Verbraucher in derselben Etappe bekommen (U1).
+
+     `--text-leise` schliesst eine echte Luecke. Die Ansichten kennen DREI
+     graue Textstufen (#1a1a1a · #666 · #888), die Token-Datei bis .212 nur
+     zwei plus `--text-deaktiviert`. Die leiseste Stufe auf
+     `--text-deaktiviert` zu ziehen waere eine Rollen-Luege: „deaktiviert"
+     sagt aus, dass etwas GESPERRT ist. Eine Monatsangabe unter einem Betrag
+     ist nicht gesperrt, sie ist nur leise. Im Dunklen trifft die Stufe genau
+     auf `--o-tx-schwach`, die das Dark-Konzept fuer eben diesen Fall
+     ausdruecklich eingefuehrt hat („Platzhalter, Einheiten und
+     Nebenangaben").
+
+     Die drei `--schatten-*` sind keine Farben, die Text tragen — sie haben
+     deshalb keine Kontrastaussage und stehen als vollstaendige Werte da (wie
+     `--schatten-card` seit jeher). Bis .212 standen sie als `rgba(0,0,0,…)`
+     im JS und waren damit im Dunkelmodus falsch: ein schwarzer Schleier ueber
+     einer dunklen Seite ist kaum sichtbar, ein Schatten in Schwarz auf einer
+     dunklen Karte gar nicht.
+     ========================================================================== */
+
+  --text-leise:             var(--grau-600);   /* Nebenangaben, Achsen, Monatszeilen */
+
+  --schatten-schwebend:     0 4px 12px color-mix(in srgb, var(--grau-950) 18%, transparent);
+  --schatten-dialog:        0 10px 40px color-mix(in srgb, var(--grau-950) 30%, transparent);
+  --schatten-schleier:      color-mix(in srgb, var(--grau-950) 45%, transparent);
+
+  /* --- R4: die drei fehlenden Chip-LINIEN. Die Pillen der
+     Nebenkosten-Ansicht tragen seit jeher einen 1-px-Rand in der Farbe
+     ihrer Familie; fuer Erfolg und Warnung gab es dafuer ein Token
+     (`--pill-*-linie`), fuer die drei uebrigen Familien nicht. Sie fehlten
+     schlicht — die Ansicht hat sich deshalb mit festen Werten beholfen. --- */
+  --chip-bereit-linie:              var(--primaer-200);
+  --chip-keine-mietzahlung-linie:   var(--violett-200);
+  --chip-offen-linie:               var(--info-200);
+  /* ==========================================================================
+     (o) LAYOUT-MASSE - G-Serie, Etappe G1 (v0.50.4, 25.08.2026)
+
+     Uebernommen aus der Zuarbeit UI_LAYOUT_TOKENS_2026-08-25.css; Herleitung,
+     Messverfahren und die neun Streitfaelle stehen in
+     UI_LAYOUT_SYSTEM_2026-08-25.md. Der Herkunftsnachweis liegt am
+     Software-Root wie bei den Farb-Tokens seit .133.
+
+     MAX' ENTSCHEIDUNG 25.08.2026 zum UMFANG: der Block wandert VOLLSTAENDIG,
+     nicht nur die Stufen mit Verbraucher. Das ist eine benannte Ausnahme von
+     der Vorrats-Regel (U1) und ist so entschieden worden, nachdem sie
+     vorgelegt war: die Messreihe des Masters ist EINE Aussage und soll nicht
+     ueber acht Etappen verteilt einsickern. Was die Listen-Schablone heute
+     nicht braucht, traegt seinen Beleg trotzdem schon.
+
+     ZWEI EINHEITEN, ZWEI REGELN (Beschluss .212, hier fortgeschrieben)
+       MASSE bleiben px und wachsen NICHT mit der Schriftgroesse.
+       SCHRIFT bleibt rem und haengt an EINER Stelle, der html-Regel.
+     Die html-Regel steht seit .212 auf 110 Prozent, die Wurzel ist also
+     17,6 px. Alle rem-Werte unten sind so gerechnet, dass sie die GEMESSENE
+     Pixelgroesse des Masters ergeben; der Klammerwert ist das Ergebnis.
+     Wer sie stattdessen durch 16 teilt, bekommt zehn Prozent zu viel.
+
+     HERKUNFT steht an JEDEM Wert.
+       GEMESSEN nnnnnn   am Master-Bild dieser Kennung nachgemessen; ein
+                         Bildpunkt ist ein CSS-Pixel (nachgewiesen an den
+                         1-px-Trennlinien der Tabellen, Zuarbeit P3)
+       PRIMEVUE          steht so in den PrimeVue-Variablen der Vorlage
+       GEBAUT            stand vor G1 schon in dieser Datei
+       ABGELEITET        nicht am Bild ablesbar, aus Regel oder Skala gefolgert
+
+     Die acht Abstands-, vier Radius- und sieben Schriftstufen sind NICHT
+     hier: sie stehen seit .133 bzw. .213 weiter oben und sind nicht
+     umbenannt worden. Hier stehen die ROLLEN daneben und die Masse, fuer die
+     es bis G1 gar keine Stufe gab.
+     ========================================================================== */
+
+  /* --- Rollen-Abstaende. Sie verweisen in die Skala, wo es geht, und tragen
+         einen eigenen Wert nur dort, wo der Master neben der Skala liegt.
+         Der Leitabstand ist 16 px - der einzige Wert, der im Master in vier
+         verschiedenen Rollen auftritt. --- */
+  --abstand-inhalt-rand:      32px;              /* GEMESSEN 115521 links 30, 120113 links 40 - Widerspruch 8, gewaehlt ist die Rastermitte */
+  --abstand-band:             32px;              /* GEMESSEN 120113 120218 120748 Seitenkopf zum naechsten Band */
+  --abstand-band-eng:         16px;              /* GEMESSEN 115657 Reiter zu Kennzahlen und Kennzahlen zur Filterzeile */
+  --abstand-karte:            var(--abstand-4);  /* GEMESSEN 115521 Dreierreihe, 120049 Zweierraster */
+  --abstand-kachel:           var(--abstand-4);  /* GEMESSEN 115657 und 120854 je 12 - Widerspruch 2, gewaehlt ist der Leitabstand */
+  --abstand-chip:             var(--abstand-4);  /* GEMESSEN 115717 und 120113 je 16 */
+  --abstand-knopf:            var(--abstand-2);  /* GEMESSEN 115717 120218 120748 je 8 */
+  --abstand-formular-spalte:  32px;              /* GEMESSEN 121243 und 120800 */
+  --abstand-formular-zeile:   40px;              /* GEMESSEN 121243 - die Skala hat keine 40er-Stufe, deshalb ein eigener Wert */
+  --abstand-zelle-x:          var(--abstand-4);  /* GEMESSEN 115717 Spaltentrenner zu Text, PRIMEVUE 1 rem */
+  --abstand-dialog-rand:      var(--abstand-7);  /* GEMESSEN 120800 links 48, rechts 47 */
+  --abstand-kachel-innen:     20px;              /* GEMESSEN 115657 Tintenkante zur Kachelkante */
+  --abstand-leiste-innen:     24px;              /* GEMESSEN 115521 breite Leiste; 120113 schmale Leiste 20 */
+
+  /* --- Hoehe, Familie Feld --- */
+  --hoehe-feld:               var(--feld-hoehe); /* GEMESSEN in 40 Bildern, u. a. 120800 120245 121513 -- VERWEIS auf die Feldhoehe aus A1,
+                                                    die seit G1 dieselbe Zahl traegt (E3). Zwei Zahlen fuer eine Aussage waeren die zweite Quelle. */
+  --hoehe-feld-klein:         37px;              /* GEMESSEN 115717 und 120113 Seitengroessen-Wahl der Paginierung */
+  --hoehe-feld-gross:         62px;              /* GEMESSEN 121243 und 121301 - Bauform Label-im-Feld, die wir NICHT uebernehmen (Widerspruch 5) */
+  --hoehe-kasten:             20px;              /* GEMESSEN 115717 Auswahlkaestchen in Kopf und Zeile */
+  --hoehe-schalter:           var(--feld-schalter-hoehe);  /* GEMESSEN 120245 -- der Master bestaetigt den A1-Wert, deshalb VERWEIS */
+  /* KEIN Verweis, und das ist der Unterschied zu den drei darueber: hier
+     weichen Master und Bestand wirklich ab (38 gegen die 40 aus A1). Der
+     Messwert steht deshalb als eigener Wert da und behauptet nicht,
+     dasselbe zu sein. Umgestellt ist nichts -- welcher der beiden gilt,
+     entscheidet die Etappe, die den Schalter anfasst. */
+  --breite-schalter:          38px;              /* GEMESSEN 120245; der Bestand fuehrt 40 in --feld-schalter-breite */
+
+  /* --- Hoehe, Familie Knopf. Widerspruch 7: der Master fuehrt vier Hoehen,
+         gewaehlt sind zwei - 48 im Seitenkopf, 40 sonst. 38 und 33 stehen
+         als Beleg da, weil der Bestand sie an zwei Stellen noch traegt. --- */
+  --hoehe-knopf:              48px;              /* GEMESSEN in 35 Bildern, Seitenkopf und Assistenten-Kopf */
+  --hoehe-knopf-dialog:       40px;              /* GEMESSEN 120800 Fussleiste */
+  --klickziel-min:            24px;              /* WCAG 2.2 AA 2.5.8 - Mindest-Klickziel */
+  --hoehe-knopf-klein:        38px;              /* GEMESSEN 115936 Bannerknoepfe; 121513 Ablageknopf 37 */
+  --hoehe-knopf-inline:       33px;              /* GEMESSEN 115759 Berichte, Aendern, Loeschen in der Kopfkarte */
+  --hoehe-pille:              32px;              /* GEMESSEN 115717 Chips und Filterknopf, PRIMEVUE 2 rem */
+  --hoehe-suchpille:          34px;              /* GEMESSEN 115717 und 120113 */
+  --hoehe-plakette:           30px;              /* GEMESSEN 120113 Plakette Leerstand */
+  --hoehe-symbolknopf:        48px;              /* GEMESSEN 120113 schmale Leiste; PRIMEVUE nennt 2,5 rem */
+
+  /* --- Hoehe, Familie Zeile --- */
+  --hoehe-tabellenkopf:       41px;              /* GEMESSEN 115717 120113 120748 121217 */
+  --hoehe-tabellenzeile:      54px;              /* GEMESSEN 120113, einzeilige Zelle */
+  --hoehe-tabellenzeile-zwei: 58px;              /* GEMESSEN 115717 und 120748, zweizeilige Hauptzelle */
+  --hoehe-summenzeile:        41px;              /* GEMESSEN 115717 und 120113 */
+  --hoehe-paginierung:        71px;              /* GEMESSEN 115717 und 120113 */
+  --hoehe-listenzeile:        74px;              /* GEMESSEN 121533 Ordneruebersicht ohne Tabelle */
+  --hoehe-formularzeile:      69px;              /* GEMESSEN 120341 NK-Kostentabelle, Feld 42 plus zweimal 13 Polster */
+  --hoehe-zusammenfassung:    83px;              /* GEMESSEN 121442 Letzte Ueberpruefung */
+  --hoehe-auswahlzeile:       45px;              /* GEMESSEN 120514 120527 120608 im Auswahlfeld-Panel */
+  --hoehe-navpunkt:           44px;              /* GEMESSEN 115521 und 115717 */
+  --hoehe-navraster:          48px;              /* GEMESSEN 115521 Punktmitte zu Punktmitte */
+  --hoehe-railraster:         54px;              /* GEMESSEN 120113 schmale Leiste */
+  --hoehe-einstellungszeile:  36px;              /* GEMESSEN 121613 aktiver Untermenue-Eintrag */
+
+  /* --- Hoehe, Familie Band. Das sind die acht Baender der Listen-Seite und
+         die Baender der uebrigen Schablonen. --- */
+  --hoehe-seitenkopf:         48px;              /* ABGELEITET aus der Knopfhoehe; der Titel selbst ist niedriger */
+  --hoehe-reiter:             48px;              /* ABGELEITET; GEMESSEN sind Text 17 und Unterstrich 2 in 115657 */
+  --hoehe-reiter-unterstrich: 2px;               /* GEMESSEN 115657 aktiver Reiter */
+  --hoehe-reiter-grundlinie:  1px;               /* GEMESSEN 115657 durchgehende Linie unter der ganzen Leiste */
+  --hoehe-filterzeile:        37px;              /* GEMESSEN 115717 120113 120748 120854 121217 */
+  --hoehe-auswahlleiste:      21px;              /* GEMESSEN 115717 und 120748, Tabellen-Aktionsleiste */
+  --hoehe-kennzahlkachel:     101px;             /* GEMESSEN 115657 120113 120854 - dreimal derselbe Wert */
+  --hoehe-dialogtitel:        88px;              /* v0.50.21 (Max 31.08.2026: "rand bei
+                                                   einheitennamen zu rahmen vergroessern").
+                                                   GEMESSEN waren 70 px (120800) -- an einem
+                                                   Titelband OHNE Schliesskreuz; das kam erst
+                                                   mit v0.50.7 dazu. 70 px liessen dem 22-px-
+                                                   Titel 24 px Luft nach oben, neben 48 px an
+                                                   den Seiten (--abstand-dialog-rand): optisch
+                                                   klebte der Name am Rahmen. 88 px = 4x22,
+                                                   das Raster haelt, die Luft wird 33 px. */
+  --hoehe-dialogfuss:         72px;              /* GEMESSEN 120800 */
+  --hoehe-banner:             70px;              /* GEMESSEN 115936 Hinweis-Banner */
+  --hoehe-ablage:             146px;             /* GEMESSEN 121513 und 120035 Ablageflaeche */
+  --hoehe-kopfkarte:          83px;              /* GEMESSEN 115936; 115759 mit Titelbild 150 */
+
+  /* --- Breite. Der Inhalt ist im Master FLIESSEND: in keinem der elf
+         Listenbilder endet er vor dem Fensterrand. Ein Hoechstmass gibt es
+         nur fuer Dialoge und fuer reinen Fliesstext. --- */
+  --breite-leiste:            270px;             /* GEMESSEN 115521 268 und 115657 269 plus Trennlinie */
+  --breite-leiste-schmal:     90px;              /* GEMESSEN in sieben Bildern uebereinstimmend 89 plus Linie */
+  --breite-leiste-zweite:     365px;             /* GEMESSEN in acht Bildern als Abstand der beiden Trennlinien */
+  --breite-kontextspalte:     365px;             /* GEMESSEN 115759 und 120049 - dieselbe Zahl wie das Untermenue */
+  --breite-inhalt-max:        none;              /* GEMESSEN in 11 Listenbildern - in keinem endet der Inhalt vor dem Fensterrand */
+  --breite-dialog-s:          720px;             /* GEMESSEN 115737 Objektberichte, 120232 NK anlegen */
+  --breite-dialog-m:          800px;             /* GEMESSEN 115818 115847 115858 115909 */
+  --breite-dialog-l:          960px;             /* GEMESSEN 115956 Ausstattung */
+  --breite-dialog-xl:         1056px;            /* GEMESSEN 120800 120810 120821 120838 Kontakt */
+  --breite-dialog-voll:       1632px;            /* GEMESSEN 120920 Umsatz anlegen */
+  --breite-dialog-nav:        230px;             /* GEMESSEN 115836 Abschnitts-Navigation im Dialog */
+  --breite-menue:             180px;             /* GEBAUT; im Master 115551 gemessen 160 */
+  --breite-tooltip:           160px;             /* GEMESSEN 115551 Diagramm-Tooltip */
+  --breite-platzhalterkarte:  180px;             /* GEMESSEN 115759 drei Kontakt-Platzhalter */
+  --breite-leerzustand-text:  720px;             /* ABGELEITET - der Master laesst den Text bis 789 laufen */
+
+  /* --- Staerken. Der Master benutzt fast nur Flaechen; die drei Stellen mit
+         einer echten Kante sind Statuskante, Auswahl und Trennlinie. --- */
+  --staerke-kante-status:     5px;               /* GEMESSEN 115521 farbige Kante der Vorgangskarte */
+  --staerke-kante-auswahl:    2px;               /* GEMESSEN 120113 gewaehlte Filter-Kachel, dort 1 bis 2 */
+  --staerke-linie:            1px;               /* GEMESSEN 115717 Spalten- und Zeilentrenner */
+
+  /* --- Schrift, die fuenf Rollen neben der Skala. E7, Max' Entscheidung
+         25.08.2026: die drei fehlenden Stufen kommen als ROLLEN dazu, die
+         sieben Stufen oben werden nicht umbenannt. Die haeufigste Groesse des
+         Masters ist die Basis mit 17,6 px - sie fehlte bis G1 ganz. --- */
+  --schrift-basis:            1rem;              /* 17,6 px - GEMESSEN 115717 Nav-Eintrag, 115657 Reiter, 115717 Knopfbeschriftung */
+  --schrift-abschnitt:        1.25rem;           /* 22,0 px - GEMESSEN 120800 Dialogtitel, 120908 Leerzustandstitel */
+  --schrift-titel-2:          1.75rem;           /* 30,8 px - GEMESSEN 121513 zweite Titelstufe */
+  --schrift-kennzahl:         2.125rem;          /* 37,4 px - GEMESSEN 115657 und 120113 Zahl der Kennzahl-Kachel */
+  --schrift-kennzahl-klein:   1.75rem;           /* 30,8 px - GEMESSEN 115521 Zahl auf der Dashboard-Karte */
+
+  /* --- Gewicht. Regel R4 haelt im Master: halbfett sind ausschliesslich
+         Tabellenkopf, Hauptwert der Zeile, Summenzeile, Dialogtitel und
+         Leerzustandstitel - durchweg "die Antwort", nie "der Rahmen". Auch
+         der 40 px hohe Seitentitel ist normal (Tintendichte 0,27 gegen 0,23
+         fuer Regular und 0,36 fuer Bold). --- */
+  --gewicht-normal:           400;               /* GEMESSEN 115717 120113 - auch der 40 px hohe Seitentitel, Tintendichte 0,27 */
+  --gewicht-halbfett:         600;               /* GEMESSEN 115717 Tabellenkopf, Hauptwert und Summenzeile */
+
+  /* --- Symbolgroessen --- */
+  --symbol-s:                 14px;              /* GEMESSEN 115717 Sortierpfeil und Zeilenmenue */
+  --symbol-m:                 18px;              /* GEMESSEN 115717 Symbol in der Tabellenzelle */
+  --symbol-l:                 24px;              /* GEMESSEN 121442 Symbol der Zusammenfassungszeile */
+  --symbol-leerzustand:       var(--leer-symbol-groesse); /* GEMESSEN 120908 121124 115936 -- bestaetigt den A3-Wert, deshalb VERWEIS */
+  --symbol-werkzeug:          16px;              /* GEMESSEN 115521 Diagramm-Werkzeugleiste, Abstand 8 */
+
+  /* --- Assistent. Die waagerechte Bauform steht seit A4; ihre Punktgroesse
+         ist bei uns 28, im Master 14. Die senkrechte Schrittliste gibt es
+         bei uns noch nicht - ihre beiden Masse stehen hier mit Beleg. --- */
+  --as-punkt-aktiv:           14px;              /* GEMESSEN 120245 Ring des aktuellen Schritts */
+  --as-punkt-offen:           10px;              /* GEMESSEN 120245 Ring eines kuenftigen Schritts */
+  /* Die Fortschrittslinie steht seit A4 weiter oben und traegt dort denselben
+     Wert -- der Master bestaetigt sie. Ein zweites Mal steht sie deshalb NICHT
+     hier; eine Dublette waere die zweite Quelle, gegen die U1 gebaut ist. */
+  --as-schrittliste-breite:   231px;             /* GEMESSEN 121243 senkrechte Schrittliste */
+  --as-schritt-hoehe:         44px;              /* GEMESSEN 121243 aktiver Schritt der Liste */
+}

@@ -1,138 +1,191 @@
 /* Ablese-Erfassung — mobil-first, grosse Bedienelemente (Keller, Handschuhe,
-   kleine Bildschirme). Bewusst eigenständig von frontend/ui-tokens.css: die
-   PWA ist ein eigenes Repo ohne Server-Verbindung (Konzept-Grenze A2). */
+   kleine Bildschirme).
 
-:root {
-  --blau: #3a63c0;
-  --blau-dunkel: #1a3a6b;
-  --grau-100: #f1f3f8;
-  --grau-300: #d0d5de;
-  --grau-700: #535965;
-  --rot: #c0392b;
-  --gruen: #1e7a46;
-  --weiss: #ffffff;
-  --radius: 10px;
-}
+   Seit der UI-Uebernahme (31.08.2026, Max' Anweisung): FARBEN, RADIEN,
+   ABSTAENDE UND SCHATTEN KOMMEN AUS ui-tokens.css / ui-tokens-dark.css —
+   beide byte-gleich aus der Mietverwaltung uebernommen (frontend/, Stand
+   v0.50.21). Diese Datei verbraucht nur die SEMANTISCHE Ebene der Tokens
+   (--flaeche-*, --text-*, --linie*, --aktion-*, --feld-*); kein Hex-Wert
+   hier. Dark Mode wirkt allein ueber [data-theme="dark"] am <html>-Element
+   (js/theme.js) — keine Komponente hier weiss etwas von Dark Mode.
+
+   Bewusst NICHT aus den Tokens: die Schriftgroessen der Eingabefelder.
+   iOS zoomt beim Fokus in jedes Feld unter 16 px — die Feld-Schrift bleibt
+   deshalb 1rem+ statt --feld-schrift (15,4 px am Desktop-Master). */
 
 * { box-sizing: border-box; }
 
+html { background: var(--flaeche-seite); }
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--grau-100);
-  color: #1f2430;
+  font-family: var(--schrift-familie);
+  background: var(--flaeche-seite);
+  color: var(--text-normal);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Kopf — wie die Leiste am Master: HELLE Flaeche, Kante zum Inhalt (H1),
+   keine eigene Farbwelt mehr. */
 header {
-  background: var(--blau-dunkel);
-  color: var(--weiss);
-  padding: 16px 20px calc(16px + env(safe-area-inset-top));
-  padding-top: max(16px, env(safe-area-inset-top));
+  background: var(--flaeche-leiste);
+  color: var(--text-stark);
+  border-bottom: 1px solid var(--linie-leiste);
+  padding: var(--abstand-4) var(--abstand-5);
+  padding-top: max(var(--abstand-4), env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--abstand-3);
 }
 
-header h1 { margin: 0; font-size: 1.3rem; }
-.konto-zeile { margin: 4px 0 0; font-size: 0.85rem; opacity: 0.85; }
+.kopf-titel { min-width: 0; }
+header h1 { margin: 0; font-size: 1.15rem; }
+.konto-zeile { margin: 2px 0 0; font-size: 0.85rem; color: var(--text-schwach); }
 
-main { padding: 16px; max-width: 640px; margin: 0 auto; }
+/* Theme-Umschalter — gleiche Bauart wie am Master (index.html dort):
+   Mond in Ruhe, Sonne unter [data-theme="dark"]. */
+.theme-umschalter {
+  background: transparent;
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-s);
+  color: var(--text-schwach);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.theme-umschalter .icon-sonne { display: none; }
+[data-theme="dark"] .theme-umschalter .icon-sonne { display: block; }
+[data-theme="dark"] .theme-umschalter .icon-mond { display: none; }
+
+main { padding: var(--abstand-4); max-width: 640px; margin: 0 auto; }
+
+.ic-svg { vertical-align: -2px; }
 
 .hinweis {
-  background: var(--weiss);
-  border: 1px solid var(--grau-300);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  margin: 0 0 12px;
+  background: var(--flaeche-card);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+  padding: var(--abstand-3) var(--abstand-4);
+  margin: 0 0 var(--abstand-3);
   font-size: 0.9rem;
-  color: var(--grau-700);
+  color: var(--text-schwach);
 }
-.hinweis-warnung { border-color: var(--rot); color: var(--rot); }
+/* Warnfarben ueber die Chip-Tokens (mittel = Warnstufe): die sind in BEIDEN
+   Token-Dateien definiert — die rohen --warnung-*-Stufen haben keine
+   Dunkelfassung und blieben im Dunkelmodus hell. */
+.hinweis-warnung {
+  background: var(--chip-mittel-bg);
+  border-color: var(--chip-mittel-punkt);
+  color: var(--chip-mittel-text);
+}
 
 .leiste {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  background: var(--weiss);
-  border: 1px solid var(--grau-300);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  gap: var(--abstand-3);
+  background: var(--flaeche-card);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+  padding: var(--abstand-3) var(--abstand-4);
+  margin-bottom: var(--abstand-3);
   font-size: 0.9rem;
 }
 
-.fehler { color: var(--rot); font-size: 0.9rem; }
+.fehler { color: var(--feld-fehler-text); font-size: 0.9rem; }
 
 button {
+  font-family: inherit;
   font-size: 1rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-s);
   border: none;
-  padding: 12px 18px;
+  padding: var(--abstand-3) var(--abstand-4);
   min-height: 44px;
   cursor: pointer;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: var(--feld-fokus-kontur-breite) solid var(--fokus-ring);
+  outline-offset: 1px;
+}
+
 .btn-primaer {
-  background: var(--blau);
-  color: var(--weiss);
+  background: var(--aktion-primaer);
+  color: var(--text-invers);
   width: 100%;
   font-size: 1.05rem;
 }
+.btn-primaer:hover { background: var(--aktion-primaer-hover); }
 
 .btn-sekundaer {
-  background: var(--grau-100);
-  border: 1px solid var(--blau);
-  color: var(--blau);
+  background: var(--flaeche-ueber);
+  border: 1px solid var(--linie-stark);
+  color: var(--aktion-primaer-schrift);
   white-space: nowrap;
 }
 
 #erfassung-kopf {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--abstand-3);
+  margin-bottom: var(--abstand-4);
   flex-wrap: wrap;
 }
 #erfassung-kopf label {
   flex: 1 1 140px;
   font-size: 0.85rem;
-  color: var(--grau-700);
+  color: var(--feld-label);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--feld-label-abstand);
 }
 #erfassung-kopf input,
 #erfassung-kopf select {
+  font-family: inherit;
   font-size: 1rem;
   padding: 10px;
-  border-radius: var(--radius);
-  border: 1px solid var(--grau-300);
+  border-radius: var(--feld-radius);
+  border: 1px solid var(--linie-stark);
+  background: var(--feld-flaeche);
+  color: var(--feld-text);
   min-height: 44px;
 }
 
 .einheit-karte {
-  background: var(--weiss);
-  border: 1px solid var(--grau-300);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin-bottom: 14px;
+  background: var(--flaeche-card);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+  box-shadow: var(--schatten-card);
+  padding: var(--abstand-4);
+  margin-bottom: var(--abstand-4);
 }
 .einheit-karte h2 {
   margin: 0 0 10px;
   font-size: 1.05rem;
-  border-bottom: 1px solid var(--grau-100);
-  padding-bottom: 8px;
+  color: var(--text-stark);
+  border-bottom: 1px solid var(--linie);
+  padding-bottom: var(--abstand-2);
 }
 
 .zaehler-zeile {
   padding: 10px 0;
-  border-bottom: 1px solid var(--grau-100);
+  border-bottom: 1px solid var(--linie);
 }
 .zaehler-zeile:last-child { border-bottom: none; }
 
-.zaehler-kopf { font-size: 0.95rem; margin-bottom: 8px; }
+.zaehler-kopf { font-size: 0.95rem; margin-bottom: var(--abstand-2); }
+.zaehler-kopf strong { color: var(--text-stark); }
 .hinweis-klein {
   display: block;
   font-size: 0.8rem;
-  color: var(--grau-700);
+  color: var(--text-schwach);
   margin-top: 2px;
 }
 
@@ -142,18 +195,23 @@ button {
 }
 .zaehler-eingabe input {
   flex: 1;
+  min-width: 0;
+  font-family: inherit;
   font-size: 1.15rem;
   padding: 10px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--grau-300);
+  border-radius: var(--feld-radius);
+  border: 1px solid var(--linie-stark);
+  background: var(--feld-flaeche);
+  color: var(--feld-text);
   min-height: 48px;
 }
-.zaehler-eingabe input.feld-fehler { border-color: var(--rot); }
+.zaehler-eingabe input.feld-fehler { border-color: var(--feld-fehler-kante); }
 .zaehler-eingabe button {
-  background: var(--gruen);
-  color: var(--weiss);
+  background: var(--aktion-primaer);
+  color: var(--text-invers);
   min-width: 120px;
 }
+.zaehler-eingabe button:hover { background: var(--aktion-primaer-hover); }
 .foto-input-versteckt {
   position: absolute;
   width: 1px; height: 1px;
@@ -162,52 +220,64 @@ button {
   pointer-events: none;
 }
 .zaehler-eingabe button.btn-foto {
-  background: var(--grau-100);
-  color: var(--blau-dunkel);
-  border: 1px solid var(--grau-300);
+  background: var(--flaeche-ueber);
+  color: var(--text-schwach);
+  border: 1px solid var(--linie-stark);
   min-width: 48px;
   flex: 0 0 auto;
-  font-size: 1.2rem;
   padding: 10px;
 }
+.zaehler-eingabe button.btn-foto .ic-svg { width: 20px; height: 20px; }
+.zaehler-eingabe button.btn-foto.foto-gewaehlt { color: var(--text-positiv); }
 
-/* A5 (v0.49.169): Reiter-Umschalter Erfassen/Nachsehen + reiner Lese-Bereich. */
+/* A5 (v0.49.169): Reiter-Umschalter Erfassen/Nachsehen + reiner Lese-Bereich.
+   Aktiver Reiter wie der aktive Navigationspunkt am Master: dunkle Pille,
+   inverse Schrift (--nav-ort-flaeche, H1). */
 #reiter-leiste { padding: 6px; gap: 6px; }
 .btn-reiter {
   flex: 1;
   background: transparent;
-  color: var(--grau-700);
+  color: var(--leiste-text-ruhig);
   min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--abstand-2);
 }
-.btn-reiter-aktiv {
-  background: var(--blau);
-  color: var(--weiss);
+.btn-reiter:hover { background: var(--leiste-flaeche-aktiv); }
+.btn-reiter-aktiv,
+.btn-reiter-aktiv:hover {
+  background: var(--nav-ort-flaeche);
+  color: var(--nav-ort-text);
 }
 
 .infobasis-block { margin-bottom: 18px; }
 .infobasis-block h2 {
   font-size: 1rem;
-  margin: 0 0 8px;
-  color: var(--blau-dunkel);
+  margin: 0 0 var(--abstand-2);
+  color: var(--text-stark);
 }
 
 .info-karte {
-  background: var(--weiss);
-  border: 1px solid var(--grau-300);
-  border-radius: var(--radius);
-  padding: 12px 14px;
+  background: var(--flaeche-card);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+  box-shadow: var(--schatten-card);
+  padding: var(--abstand-3) var(--abstand-4);
   margin-bottom: 10px;
 }
 .info-karte h3 {
   margin: 0 0 6px;
   font-size: 0.95rem;
+  color: var(--text-stark);
 }
 .info-zeile {
   font-size: 0.85rem;
-  color: var(--grau-700);
+  color: var(--text-schwach);
   margin: 2px 0;
 }
-.info-leer { color: var(--grau-700); font-size: 0.85rem; font-style: italic; }
+.info-zeile strong { color: var(--text-normal); }
+.info-leer { color: var(--text-schwach); font-size: 0.85rem; font-style: italic; }
 
-.aufgabe-karte.severity-urgent { border-color: var(--rot); }
-.aufgabe-karte .info-zeile.severity-urgent-text { color: var(--rot); }
+.aufgabe-karte.severity-urgent { border-color: var(--feld-fehler-kante); }
+.aufgabe-karte .info-zeile.severity-urgent-text { color: var(--text-negativ); }

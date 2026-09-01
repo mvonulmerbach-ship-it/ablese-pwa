@@ -3,12 +3,21 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
-const CACHE_NAME = "ablese-huelle-v1";
+// v3: 01.09.2026 — die Icons kommen jetzt aus dem Hauslogo der
+// Gutsverwaltung (tools/icons_erzeugen.py in der Mietverwaltung). Ein
+// Geraet mit der v2-Huelle traegt sonst weiter das alte blaue Zeichen.
+// v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
+// gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
+const CACHE_NAME = "ablese-huelle-v3";
 const HUELLE = [
   "./",
   "index.html",
   "app.css",
+  "ui-tokens.css",
+  "ui-tokens-dark.css",
   "manifest.json",
+  "js/icons.js",
+  "js/theme.js",
   "js/config.js",
   "js/queue.js",
   "js/auth.js",
@@ -17,6 +26,8 @@ const HUELLE = [
   "vendor/msal/msal-browser.min.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
+  "icons/favicon-32.png",
+  "icons/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
