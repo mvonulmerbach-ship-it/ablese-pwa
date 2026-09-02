@@ -384,15 +384,28 @@
      ========================================================================== */
 
   /* --- Flaechen, Text und Kanten des Felds --- */
-  --feld-flaeche:              var(--grau-300);   /* H1 — FUENFTE gerechnete
-                                 Ableitung, derselben Art wie die vier des Konzepts:
-                                 der Master misst die Feldfuellung als grau-100, und
-                                 sie traegt gegen die weisse Karte nur 1,12 (grau-200:
-                                 1,18). Der Ebenen-Waechter aus .204 verlangt 1,2 —
-                                 grau-300 kommt auf 1,37. Nur die Helligkeit wandert,
-                                 Farbton und Saettigung bleiben. */
-  --feld-flaeche-fokus:       var(--weiss);        /* Fokus: eine Ebene heller (6.2) */
-  --feld-flaeche-deaktiviert: var(--grau-100);     /* gesperrt: kontrastaermer, nicht dunkler */
+  /* v0.50.33 (W15, Max 01.09.2026: „nicht besonders einleuchtend“): DIE
+     FELDFLAECHE IST WEISS. Bis .50.32 war sie --grau-300 -- und ein graues
+     Feld liest sich wie ein gesperrtes. Das war kein Versehen, sondern die
+     Regel aus A1/.204 (R1: „Flaeche statt Linie“, das Feld liegt eine Ebene
+     UNTER der Karte). Max hat sie am 01.09.2026 umgedreht, wie er am
+     24.08.2026 die Rundung umgedreht hat: **das Feld wird von seiner KONTUR
+     getragen, nicht von seiner Flaeche.** Weiss liegt eine Ebene UEBER der
+     Karte (die ist seit E11 --grau-50) -- heller heisst jetzt „hier kannst
+     du schreiben“.
+     GRAU IST DAMIT AUSSCHLIESSLICH GESPERRTES, und zwar genau das Grau, das
+     bis .50.32 die Feldflaeche war. Die Rolle wandert, der Wert bleibt --
+     wer die alte Optik sucht, findet sie dort, wo sie ab jetzt hingehoert. */
+  --feld-flaeche:             var(--weiss);
+  --feld-flaeche-fokus:       var(--weiss);        /* seit W15 dieselbe Flaeche wie in Ruhe --
+                                                     im Hellen gibt es ueber Weiss keine Ebene
+                                                     mehr; den Fokus traegt die Kontur. */
+  --feld-flaeche-deaktiviert: var(--grau-200);     /* gesperrt (W15): grau UND ohne Kontur --
+                                                     die Kontur ist seit W15 das Zeichen fuer
+                                                     „hier kannst du schreiben“, ihr Fehlen
+                                                     also das fuer das Gegenteil. Eine Stufe
+                                                     heller als die alte Feldflaeche, damit die
+                                                     Beschriftung darauf 4,5 traegt. */
   --feld-text:                var(--grau-950);     /* der eingetragene Wert */
   --feld-text-platzhalter:    var(--grau-800);     /* Beispiel, kein Wert */
   --feld-label:               var(--grau-700);     /* Beschriftung ueber dem Feld */
@@ -401,6 +414,10 @@
                                                      E11 -- eine Stufe tiefer, wie
                                                      --fokus-ring und aus demselben Grund:
                                                      2,99 auf der grauen Karte */
+  --feld-kontur:              var(--linie-stark);  /* W15 -- die ruhige Kontur, die das Feld
+                                                     jetzt traegt. --linie-stark ist laut
+                                                     seinem eigenen Kommentar seit jeher der
+                                                     Eingabefeld-Rahmen; 5,3:1 auf Weiss. */
   --feld-fehler-kante:        var(--fehler-600);   /* Kante links am Feld (6.1) */
   --feld-fehler-text:         var(--fehler-700);   /* Ursache + naechster Schritt */
 
@@ -434,6 +451,7 @@
   --feld-label-abstand:       var(--abstand-1);    /* Label -> Feld */
   --feld-abstand:             var(--abstand-4);    /* Feld -> naechstes Feld */
   --feld-fehler-kante-breite: 3px;
+  --feld-kontur-breite:       1px;
   --feld-fokus-kontur-breite: 2px;
   --feld-schalter-breite:     40px;
   --feld-schalter-hoehe:      22px;
@@ -684,7 +702,16 @@
      ========================================================================== */
 
   --schrift-familie: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --schrift-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  /* W12 (v0.50.37): EINE Schriftart. Der Zweitwert ist WEG — das Token zeigt
+     auf dieselbe Familie wie `--schrift-familie`. Es bleibt bestehen, weil
+     zwei Waechter es binden: `.212` verlangt den Namen in DIESER Datei (und
+     nicht in der dunklen), `.213` verlangt einen Verbraucher im Frontend.
+     Beides ist erfuellt, ohne dass noch eine zweite Schrift auf dem Schirm
+     steht. Unterschieden wird ab hier ueber Farbe, Fettung und den
+     abgesetzten Block — nicht ueber die Schriftart. Der vendorierte
+     JetBrains-Mono-Font bleibt als Datei liegen (`test_offline_vendoring`
+     pinnt ihn), wird aber von keiner Regel mehr gerufen. */
+  --schrift-mono: var(--schrift-familie);
 
   /* ==========================================================================
      (m) SCHRIFTGROESSEN — R-Serie „UI relativieren", Etappe R1 (25.08.2026)
@@ -822,6 +849,22 @@
   --chip-bereit-linie:              var(--primaer-200);
   --chip-keine-mietzahlung-linie:   var(--violett-200);
   --chip-offen-linie:               var(--info-200);
+
+  /* --- Das Markenlogo (v0.50.40, Max' Anweisung 01.09.2026). Vier Tinten
+         der vollen Fassung, die im Kopf der Seitenleiste als Vektor steht.
+         Sie stehen hier und nicht im SVG, weil ein Logo auf dem Obsidian-
+         Grund sonst nicht reagieren koennte: Petrol misst dort 2,62 und
+         reisst die 3,0, die WCAG 2.1 fuer eine bedeutungstragende Grafik
+         verlangt (die Dunkelfassung misst 5,41). ALLE VIER sind reine
+         VERWEISE -- das Logo ist in der Farbwelt der Anwendung gezeichnet,
+         nicht daneben, und kein Farbwert entsteht hier ein zweites Mal. --- */
+  --logo-oben:                var(--primaer-700);  /* Schildkopf und Hauswand */
+  --logo-unten:               var(--primaer-900);  /* unteres Zickzackband */
+  --logo-band:                var(--weiss);        /* mittleres Band, Fenster, Tuer */
+  --logo-dach:                var(--primaer-800);  /* Dach und Schornstein. Die Vorlage
+                                        liefert #0c5c5a, --primaer-800 ist #0c5a59 -- ein Verhaeltnis von
+                                        1,03, also dieselbe Farbe. Lieber die vorhandene Stufe als ein
+                                        zweiter Wert, der sich um zwei Punkt unterscheidet (U1). */
   /* ==========================================================================
      (o) LAYOUT-MASSE - G-Serie, Etappe G1 (v0.50.4, 25.08.2026)
 
@@ -896,7 +939,10 @@
          als Beleg da, weil der Bestand sie an zwei Stellen noch traegt. --- */
   --hoehe-knopf:              48px;              /* GEMESSEN in 35 Bildern, Seitenkopf und Assistenten-Kopf */
   --hoehe-knopf-dialog:       40px;              /* GEMESSEN 120800 Fussleiste */
-  --klickziel-min:            24px;              /* WCAG 2.2 AA 2.5.8 - Mindest-Klickziel */
+  --klickziel-min:            24px;              /* VERWEIS WCAG 2.2 AA 2.5.8 - Mindest-Klickziel */
+  --breite-zeilenaktion:      80px;              /* ABGELEITET aus --klickziel-min - der Zeilen-Stift misst mit Knopf-Innenabstand 48, dazu zweimal --abstand-zelle-x (16). Bei 50 ragte er in die Nachbarzelle (Befund 01.09.2026). */
+  --breite-zahlfeld:          120px;             /* ABGELEITET W14/B8 (01.09.2026) - Eingabefeld fuer eine ZAHL in einer Tabellenzelle. Ein Feld, das mit seinem Inhalt waechst, verschiebt die Zeile auch in einer festen Spalte; 120 traegt einen sechsstelligen Zaehlerstand mit Nachkommastellen. */
+  --breite-text-deckel:       720px;             /* VERWEIS E1 (Entscheidungsrunde 31.08.2026) - Hoechstmass fuer REINE Textbloecke (Leerzustaende, Hinweise, Erklaertexte); Tabellen und Listen laufen voll */
   --hoehe-knopf-klein:        38px;              /* GEMESSEN 115936 Bannerknoepfe; 121513 Ablageknopf 37 */
   --hoehe-knopf-inline:       33px;              /* GEMESSEN 115759 Berichte, Aendern, Loeschen in der Kopfkarte */
   --hoehe-pille:              32px;              /* GEMESSEN 115717 Chips und Filterknopf, PRIMEVUE 2 rem */
@@ -928,9 +974,10 @@
   --hoehe-filterzeile:        37px;              /* GEMESSEN 115717 120113 120748 120854 121217 */
   --hoehe-auswahlleiste:      21px;              /* GEMESSEN 115717 und 120748, Tabellen-Aktionsleiste */
   --hoehe-kennzahlkachel:     101px;             /* GEMESSEN 115657 120113 120854 - dreimal derselbe Wert */
-  --hoehe-dialogtitel:        88px;              /* v0.50.21 (Max 31.08.2026: "rand bei
-                                                   einheitennamen zu rahmen vergroessern").
-                                                   GEMESSEN waren 70 px (120800) -- an einem
+  --hoehe-dialogtitel:        88px;              /* GEMESSEN 120800 waren 70 px; in v0.50.21
+                                                   auf 88 px erhoeht (Max 31.08.2026: "rand
+                                                   bei einheitennamen zu rahmen vergroessern").
+                                                   Die 70 px sind an einem
                                                    Titelband OHNE Schliesskreuz; das kam erst
                                                    mit v0.50.7 dazu. 70 px liessen dem 22-px-
                                                    Titel 24 px Luft nach oben, neben 48 px an

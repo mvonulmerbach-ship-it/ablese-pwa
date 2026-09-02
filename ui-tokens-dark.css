@@ -315,6 +315,11 @@
   --feld-label:               var(--o-tx2);
   --feld-pflicht:             var(--o-rot-text);
   --feld-fokus-kontur:        var(--o-akzent-rand);
+  /* v0.50.33 (W15): die Kontur, die das Feld jetzt traegt. Im DUNKLEN bleibt
+     die Flaeche eine Stufe unter der Karte -- dort gibt es kein „Weiss heisst
+     leer, Grau heisst gesperrt“, und eine hellere Flaeche IST hier der Fokus.
+     Die Kontur kommt dazu, sie ersetzt nichts. */
+  --feld-kontur:              var(--o-ui2);   /* Rahmen stark -- dieselbe Rolle wie hell */
   --feld-fehler-kante:        var(--o-rot-rand);   /* H1: 2,46 auf der Karte -> 3,00 */
   --feld-fehler-text:         var(--o-rot-text);
 
@@ -503,4 +508,21 @@
   --chip-bereit-linie:              var(--o-blau);
   --chip-keine-mietzahlung-linie:   var(--o-violett);
   --chip-offen-linie:               var(--o-cyan);
+
+  /* --- Das Markenlogo (v0.50.40). Die gelieferte Dunkelfassung ist aus
+         Max' eigenem Akzentgruen gezeichnet -- nachgemessen sind alle drei
+         Werte BUCHSTABENGLEICH zu Tokens, die es hier laengst gibt. Das ist
+         kein Zufall, sondern das Zeichen, dass Logo und Obsidian-Palette aus
+         derselben Quelle kommen; deshalb stehen hier Verweise und keine
+         zweite Farbliste -- so, wie es .212 fuer JEDE Anwendungsrolle in
+         dieser Datei verlangt. --- */
+  --logo-oben:                var(--o-akzent-flaeche);  /* #87b599 -- 5,41 auf dem Grund */
+  --logo-unten:               var(--o-akzent);          /* #5c9472 -- 3,53 auf dem Grund */
+  --logo-band:                var(--o-bg1);             /* #2E3440 -- das Band nimmt den Grund auf */
+  --logo-dach:                var(--o-akzent-rand);     /* Dach und Schornstein. Die Vorlage
+                                        liefert #61826e; das misst auf dem Grund 2,93 und reisst die 3,0
+                                        -- der Schornstein steht frei, nicht im Zeichen. --o-akzent-rand
+                                        (#71a787) ist die Umriss-Stufe derselben Familie und misst 4,51.
+                                        Eine Stufe heller als die Vorlage, dafuer sichtbar. */
+
 }

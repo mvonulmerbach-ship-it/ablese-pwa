@@ -3,12 +3,15 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
-// v3: 01.09.2026 — die Icons kommen jetzt aus dem Hauslogo der
-// Gutsverwaltung (tools/icons_erzeugen.py in der Mietverwaltung). Ein
-// Geraet mit der v2-Huelle traegt sonst weiter das alte blaue Zeichen.
+// v4: 01.09.2026 — die Icons kommen jetzt aus dem EIGENEN Zeichen der
+// Mietverwaltung (das Schild, tools/icons_erzeugen.py dort). Ein Geraet mit
+// der v3-Huelle traegt sonst weiter das Donauwinkel der Gutsverwaltung —
+// und genau dieser Fall ist der Grund, warum die Huellen-Version bei jedem
+// Icon-Wechsel steigen MUSS: ein Startbildschirm-Icon wird nie neu geholt.
+// v3: 01.09.2026 — die Icons kamen aus dem Hauslogo der Gutsverwaltung.
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
-const CACHE_NAME = "ablese-huelle-v3";
+const CACHE_NAME = "ablese-huelle-v4";
 const HUELLE = [
   "./",
   "index.html",
@@ -26,6 +29,7 @@ const HUELLE = [
   "vendor/msal/msal-browser.min.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
+  "icons/favicon.svg",
   "icons/favicon-32.png",
   "icons/apple-touch-icon.png",
 ];
