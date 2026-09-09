@@ -15,6 +15,14 @@
 
 * { box-sizing: border-box; }
 
+/* 09.09.2026: Der Browser versteckt [hidden] ueber `display: none` aus dem
+   Standard-Stylesheet — jede eigene Klasse mit eigenem `display` schlaegt
+   das und macht das Element sichtbar, obwohl der Code es versteckt hat.
+   Genau so blieb der Zurueck-Knopf (`display: inline-flex`) auf der
+   obersten Ebene stehen. Diese Regel gilt fuer die ganze App, damit der
+   Fehler nicht beim naechsten Flex-Element wiederkommt. */
+[hidden] { display: none !important; }
+
 html { background: var(--flaeche-seite); }
 
 body {
@@ -290,3 +298,162 @@ select:focus-visible {
 
 .aufgabe-karte.severity-urgent { border-color: var(--feld-fehler-kante); }
 .aufgabe-karte .info-zeile.severity-urgent-text { color: var(--text-negativ); }
+
+/* ===== Nachsehen: Ebene-fuer-Ebene-Navigation (09.09.2026) ============== */
+
+#nachsehen-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-3);
+  margin-bottom: var(--abstand-3);
+}
+.nachsehen-titelblock { min-width: 0; }          /* erlaubt das Kuerzen unten */
+#nachsehen-titel {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-stark);
+  /* Lange Einheitsnamen duerfen die Kopfzeile nicht sprengen. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nachsehen-unterzeile {
+  margin: 1px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-schwach);
+}
+
+/* Der Zurueck-Knopf steht links neben dem Titel und ist bewusst so gross
+   wie die uebrigen Tippflaechen — er wird unterwegs am haeufigsten
+   getroffen und darf kein Ziel fuer den Daumen zum Suchen sein. */
+.btn-zurueck {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 0 12px 0 8px;
+  font-size: 0.85rem;
+  background: var(--flaeche-card);
+  color: var(--text-normal);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+}
+.btn-zurueck:hover { background: var(--leiste-flaeche-aktiv); }
+
+/* Eine antippbare Listenzeile. Mindesthoehe 56 px: bequem mit dem Daumen
+   im Treppenhaus, auch mit Handschuh. */
+.nav-zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 10px var(--abstand-4);
+  margin-bottom: 8px;
+  text-align: left;
+  background: var(--flaeche-card);
+  color: var(--text-normal);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+  box-shadow: var(--schatten-card);
+}
+.nav-zeile:hover { background: var(--leiste-flaeche-aktiv); }
+.nav-zeile-icon {
+  flex: none;
+  display: inline-flex;
+  color: var(--text-schwach);
+}
+.nav-zeile-text {
+  flex: 1 1 auto;
+  min-width: 0;                                   /* sonst kein Kuerzen */
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.nav-zeile-titel {
+  font-size: 0.95rem;
+  color: var(--text-stark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-zeile-unter {
+  font-size: 0.8rem;
+  color: var(--text-schwach);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Die Zaehlung rechts darf schrumpfen, aber nie den Titel verdraengen. */
+.nav-zeile-hinweis {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--text-schwach);
+  text-align: right;
+}
+.nav-zeile-pfeil {
+  flex: none;
+  display: inline-flex;
+  color: var(--text-schwach);
+}
+
+/* Ein Abschnitt der Detailseite (Mieter, Vertrag, Zaehler, Aufgaben). */
+.detail-block {
+  background: var(--flaeche-card);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-l);
+  box-shadow: var(--schatten-card);
+  padding: var(--abstand-3) var(--abstand-4);
+  margin-bottom: 10px;
+}
+.detail-kopf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-schwach);
+}
+.detail-name {
+  font-size: 0.95rem;
+  color: var(--text-stark);
+  margin: 0 0 4px;
+}
+.detail-summe {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--linie);
+  color: var(--text-normal);
+}
+
+/* Telefon/E-Mail sind echte Links — im Treppenhaus der eigentliche Zweck. */
+.kontakt-zeile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+}
+.kontakt-zeile a {
+  color: var(--text-normal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Aufgaben-Karten stehen INNERHALB eines Detail-Blocks: flacher, damit
+   nicht Karte in Karte in Karte erscheint. */
+.detail-block .aufgabe-karte {
+  box-shadow: none;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.detail-block .aufgabe-karte:last-child { margin-bottom: 0; }
+.aufgabe-titel {
+  margin: 0 0 2px;
+  font-size: 0.9rem;
+  color: var(--text-stark);
+}
+.aufgabe-herkunft { font-style: italic; }

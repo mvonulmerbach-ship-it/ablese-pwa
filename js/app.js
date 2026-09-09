@@ -26,24 +26,38 @@ const WARTESCHLANGE_SCHONFRIST_TAGE = 14;
 
 // A5 (v0.49.169): drei eigene Cache-Schlüssel, ein Datenbereich kann ohne
 // die anderen offline vorliegen (Muster ZAEHLERLISTE_CACHE_SCHLUESSEL).
-// `standEl`/`render` sind Funktionen statt direkter Referenzen: dieses
-// Objekt wird beim Skriptstart ausgewertet, VOR `init()` -- zu dem
-// Zeitpunkt existiert `els` noch nicht (verzoegerte Aufloesung noetig).
+// 09.09.2026: kein `render` mehr je Datei — die drei Bereiche werden nicht
+// mehr getrennt untereinander gezeichnet, sondern zu EINER Navigation
+// verwoben (nachsehenZeichnen). Jeder Teil legt seine Rohdaten in
+// `infobasisDaten` ab und stösst ein Neuzeichnen an; welcher Teil gerade
+// sichtbar wird, entscheidet die Ebene, auf der man steht.
 const INFOBASIS_DATEIEN = {
   einheiten: {
     datei: "einheiten.json", cacheKey: "ablese_infobasis_einheiten_v1",
-    standEl: () => els.infoEinheitenStand, render: (d) => renderInfobasisEinheiten(d),
   },
   zaehlerstaende: {
     datei: "zaehlerstaende.json", cacheKey: "ablese_infobasis_zaehlerstaende_v1",
-    standEl: () => els.infoZaehlerstaendeStand, render: (d) => renderInfobasisZaehlerstaende(d),
   },
   aufgaben: {
     datei: "aufgaben.json", cacheKey: "ablese_infobasis_aufgaben_v1",
-    standEl: () => els.infoAufgabenStand, render: (d) => renderInfobasisAufgaben(d),
   },
 };
 let infobasisGeladen = false; // Graph-Abruf nur beim ersten Wechsel auf "Nachsehen"
+
+// Die zuletzt geladenen Rohdaten je Bereich; null = für diesen Bereich liegt
+// noch nichts vor. Bewusst EIN Speicher statt drei gerenderter Listen: die
+// Detailseite einer Einheit braucht alle drei gleichzeitig (Mieter aus
+// `einheiten`, Zähler aus `zaehlerstaende`, Offenes aus `aufgaben`) und
+// verknüpft sie über `einheit_id`, die in allen dreien steht.
+const infobasisDaten = { einheiten: null, zaehlerstaende: null, aufgaben: null };
+// Warum ein Bereich fehlt — getrennt gehalten, damit ein fehlender Teil
+// benannt wird, statt die anderen beiden mit auszublenden (Regel .109).
+const infobasisFehler = { einheiten: null, zaehlerstaende: null, aufgaben: null };
+
+// Wo im Nachsehen-Bereich man gerade steht. `ebene` ist eine von
+// "objekte" (Liste der NK-Kreise), "kreis" (Einheiten EINES Kreises),
+// "einheit" (Detailseite) und "aufgaben" (alle offenen Aufgaben).
+let nachsehenOrt = { ebene: "objekte", kreis: null, einheitId: null };
 
 const els = {};
 let zaehlerlisteAktuell = null; // zuletzt geladene/gecachte Zählerliste
@@ -92,12 +106,12 @@ async function init() {
   els.reiterNachsehen = q("reiter-nachsehen");
   els.erfassenBereich = q("erfassen-bereich");
   els.nachsehenBereich = q("nachsehen-bereich");
-  els.infoEinheitenStand = q("infobasis-einheiten-stand");
-  els.infoEinheitenListe = q("infobasis-einheiten-liste");
-  els.infoZaehlerstaendeStand = q("infobasis-zaehlerstaende-stand");
-  els.infoZaehlerstaendeListe = q("infobasis-zaehlerstaende-liste");
-  els.infoAufgabenStand = q("infobasis-aufgaben-stand");
-  els.infoAufgabenListe = q("infobasis-aufgaben-liste");
+  els.nachsehenZurueck = q("nachsehen-zurueck");
+  els.nachsehenTitel = q("nachsehen-titel");
+  els.nachsehenUnterzeile = q("nachsehen-unterzeile");
+  els.nachsehenStand = q("nachsehen-stand");
+  els.nachsehenInhalt = q("nachsehen-inhalt");
+  els.nachsehenZurueck.addEventListener("click", () => nachsehenZurueck());
 
   // UI-Uebernahme 31.08.2026: Symbole aus der Icon-Bank (js/icons.js) vor
   // die statischen Beschriftungen — derselbe Zeichenweg wie am Master
@@ -181,9 +195,14 @@ function zeigeReiter(name) {
   els.reiterNachsehen.classList.toggle("btn-reiter-aktiv", !erfassenAktiv);
   els.erfassenBereich.hidden = !erfassenAktiv;
   els.nachsehenBereich.hidden = erfassenAktiv;
-  if (!erfassenAktiv && !infobasisGeladen) {
-    infobasisGeladen = true;
-    infobasisVomGraphLaden();
+  if (!erfassenAktiv) {
+    // Der Ort bleibt erhalten: wer zum Erfassen wechselt und zurueckkommt,
+    // steht wieder bei der Einheit, die er angesehen hat.
+    nachsehenZeichnen();
+    if (!infobasisGeladen) {
+      infobasisGeladen = true;
+      infobasisVomGraphLaden();
+    }
   }
 }
 
@@ -192,11 +211,12 @@ function ladeInfobasisAusCache() {
     const roh = localStorage.getItem(teil.cacheKey);
     if (!roh) continue;
     try {
-      teil.render(JSON.parse(roh));
+      infobasisDaten[key] = JSON.parse(roh);
     } catch {
       localStorage.removeItem(teil.cacheKey);
     }
   }
+  nachsehenZeichnen();
 }
 
 async function infobasisVomGraphLaden() {
@@ -208,133 +228,466 @@ async function infobasisVomGraphLaden() {
     return; // Anmeldung abgelaufen -- Cache bleibt sichtbar, kein Absturz
   }
   await Promise.all(
-    Object.values(INFOBASIS_DATEIEN).map((teil) => ladeInfobasisTeil(token, teil))
+    Object.entries(INFOBASIS_DATEIEN).map(([key, teil]) => ladeInfobasisTeil(token, key, teil))
   );
 }
 
-async function ladeInfobasisTeil(token, teil) {
+async function ladeInfobasisTeil(token, key, teil) {
   try {
     const daten = await AbleseGraph.infobasisLesen(token, teil.datei);
     if (!daten) {
-      teil.standEl().textContent =
+      infobasisFehler[key] =
         "Noch kein Export vorhanden — läuft am Master automatisch beim nächsten Backup (A5).";
+      nachsehenZeichnen();
       return;
     }
     localStorage.setItem(teil.cacheKey, JSON.stringify(daten));
-    teil.render(daten);
+    infobasisDaten[key] = daten;
+    infobasisFehler[key] = null;
+    nachsehenZeichnen();
   } catch (fehler) {
-    if (!localStorage.getItem(teil.cacheKey)) {
-      teil.standEl().textContent = `Konnte nicht geladen werden: ${fehler.message || fehler}`;
+    // Mit Cache im Ruecken bleibt der zuletzt geladene Stand sichtbar —
+    // gemeldet wird nur, wenn dieser Bereich sonst gar nichts zu zeigen hat.
+    if (!infobasisDaten[key]) {
+      infobasisFehler[key] = `Konnte nicht geladen werden: ${fehler.message || fehler}`;
+      nachsehenZeichnen();
     }
-    // Mit Cache im Ruecken bleibt der zuletzt geladene Stand sichtbar.
   }
 }
 
-function renderInfobasisEinheiten(daten) {
-  const stand = formatiereDatum(daten.erstellt_am);
-  els.infoEinheitenStand.textContent = stand ? `Stand vom ${stand}` : "Stand unbekannt.";
-  els.infoEinheitenListe.innerHTML = "";
-  const einheiten = daten.einheiten || [];
+// --------------------------------------------------------------------------- #
+// Nachsehen: Ebene fuer Ebene (09.09.2026)
+//
+// NK-Kreis -> Einheit -> Detail. Der Export liefert die Einheiten bereits
+// nach `nk_kreis_id, bezeichnung` sortiert und traegt den Kreisnamen in
+// `objekt`; verknuepft wird ueber `einheit_id`, die in allen drei Dateien
+// steht. Unterwegs sucht man EINE Einheit — deshalb Antippen statt Scrollen.
+// Weiterhin reines Lesen: keine Funktion hier legt an, rechnet oder bucht.
+// --------------------------------------------------------------------------- #
+
+// Einheiten ohne NK-Kreis verschwinden nicht, sie bekommen einen eigenen
+// benannten Sammelpunkt am Ende der Liste (Regel .109).
+const OHNE_OBJEKT = "Ohne Objekt";
+
+function einheitenListe() { return infobasisDaten.einheiten?.einheiten || []; }
+function zaehlerListe() { return infobasisDaten.zaehlerstaende?.zaehlerstaende || []; }
+function aufgabenListe() { return infobasisDaten.aufgaben?.aufgaben || []; }
+
+function einheitFinden(id) {
+  return einheitenListe().find((e) => e.einheit_id === id) || null;
+}
+function zaehlerVonEinheit(id) {
+  return zaehlerListe().filter((z) => z.einheit_id === id);
+}
+function aufgabenVonEinheit(id) {
+  return aufgabenListe().filter((a) => a.einheit_id === id);
+}
+function einheitLabel(eh) {
+  return [eh.bezeichnung, eh.typ].filter(Boolean).join(" · ");
+}
+
+// Nach Kreisnamen sortiert; der Sammelpunkt ohne Kreis immer zuletzt.
+function kreiseSammeln() {
+  const map = new Map();
+  for (const eh of einheitenListe()) {
+    const k = eh.objekt || OHNE_OBJEKT;
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(eh);
+  }
+  return [...map.entries()].sort((a, b) => {
+    if (a[0] === OHNE_OBJEKT) return 1;
+    if (b[0] === OHNE_OBJEKT) return -1;
+    return a[0].localeCompare(b[0], "de");
+  });
+}
+
+// "3 Jahre 2 Monate" — angebrochene Monate zaehlen nicht mit, damit die
+// Angabe am Tag vor dem Jahrestag nicht schon aufrundet. Ein Vertrag, der
+// erst beginnt, wird als solcher benannt statt mit "0 Monate".
+function mietdauerText(beginn, ende) {
+  if (!beginn) return null;
+  const von = new Date(beginn);
+  if (Number.isNaN(von.getTime())) return null;
+  const bis = ende ? new Date(ende) : new Date();
+  if (Number.isNaN(bis.getTime())) return null;
+  if (bis < von) return null;
+  let monate = (bis.getFullYear() - von.getFullYear()) * 12 + (bis.getMonth() - von.getMonth());
+  if (bis.getDate() < von.getDate()) monate -= 1;
+  if (monate < 0) monate = 0;
+  const jahre = Math.floor(monate / 12);
+  const rest = monate % 12;
+  const teile = [];
+  if (jahre) teile.push(jahre === 1 ? "1 Jahr" : `${jahre} Jahre`);
+  if (rest) teile.push(rest === 1 ? "1 Monat" : `${rest} Monate`);
+  return teile.length ? teile.join(" ") : "noch keinen vollen Monat";
+}
+
+function betragText(wert, bezeichnung) {
+  if (wert == null) return null;
+  const zahl = Number(wert);
+  const formatiert = Number.isFinite(zahl)
+    ? zahl.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : wert;
+  return `${bezeichnung} ${formatiert} €`;
+}
+
+// --------------------------------------------------------------------------- #
+// Bausteine
+// --------------------------------------------------------------------------- #
+
+// Eine antippbare Zeile. Bewusst ein <button>: grosse Flaeche, funktioniert
+// mit Tastatur und Screenreader ohne Zusatzarbeit.
+function navZeile({ icon, titel, unterzeile, hinweis, ziel }) {
+  const knopf = document.createElement("button");
+  knopf.type = "button";
+  knopf.className = "nav-zeile";
+
+  if (icon) {
+    const links = document.createElement("span");
+    links.className = "nav-zeile-icon";
+    links.innerHTML = icSvg(icon);
+    knopf.appendChild(links);
+  }
+
+  const mitte = document.createElement("span");
+  mitte.className = "nav-zeile-text";
+  const t = document.createElement("span");
+  t.className = "nav-zeile-titel";
+  t.textContent = titel;
+  mitte.appendChild(t);
+  if (unterzeile) {
+    const u = document.createElement("span");
+    u.className = "nav-zeile-unter";
+    u.textContent = unterzeile;
+    mitte.appendChild(u);
+  }
+  knopf.appendChild(mitte);
+
+  if (hinweis) {
+    const h = document.createElement("span");
+    h.className = "nav-zeile-hinweis";
+    h.textContent = hinweis;
+    knopf.appendChild(h);
+  }
+
+  const pfeil = document.createElement("span");
+  pfeil.className = "nav-zeile-pfeil";
+  pfeil.innerHTML = icSvg("chevron-right");
+  knopf.appendChild(pfeil);
+
+  knopf.addEventListener("click", () => nachsehenGehe(ziel));
+  return knopf;
+}
+
+function abschnittBauen(icon, titel) {
+  const block = document.createElement("section");
+  block.className = "detail-block";
+  const kopf = document.createElement("h3");
+  kopf.className = "detail-kopf";
+  kopf.innerHTML = icSvg(icon) + " ";
+  kopf.append(titel);
+  block.appendChild(kopf);
+  return block;
+}
+
+function zeileBauen(text, klasse) {
+  const p = document.createElement("p");
+  p.className = "info-zeile" + (klasse ? " " + klasse : "");
+  p.textContent = text;
+  return p;
+}
+
+// Telefonnummer und E-Mail als echte Links: unterwegs ist Antippen und
+// Anrufen der eigentliche Zweck dieser Seite.
+function kontaktZeile(icon, text, href) {
+  const p = document.createElement("p");
+  p.className = "info-zeile kontakt-zeile";
+  p.innerHTML = icSvg(icon) + " ";
+  const a = document.createElement("a");
+  a.href = href;
+  a.textContent = text;
+  p.appendChild(a);
+  return p;
+}
+
+function leerZeile(text) {
+  const p = document.createElement("p");
+  p.className = "info-leer";
+  p.textContent = text;
+  return p;
+}
+
+// --------------------------------------------------------------------------- #
+// Navigation
+// --------------------------------------------------------------------------- #
+
+function nachsehenGehe(ziel) {
+  nachsehenOrt = { ebene: "objekte", kreis: null, einheitId: null, ...(ziel || {}) };
+  nachsehenZeichnen();
+  // Eine neue Ebene faengt oben an — sonst landet man mitten in der Liste.
+  window.scrollTo(0, 0);
+}
+
+function nachsehenZurueck() {
+  const o = nachsehenOrt;
+  if (o.ebene === "einheit") {
+    const eh = einheitFinden(o.einheitId);
+    nachsehenGehe({ ebene: "kreis", kreis: o.kreis || (eh ? eh.objekt || OHNE_OBJEKT : null) });
+    return;
+  }
+  nachsehenGehe({ ebene: "objekte" });
+}
+
+function nachsehenStandText() {
+  const zeiten = ["einheiten", "zaehlerstaende", "aufgaben"]
+    .map((k) => infobasisDaten[k]?.erstellt_am)
+    .filter(Boolean)
+    .map((s) => new Date(s))
+    .filter((d) => !Number.isNaN(d.getTime()));
+  if (!zeiten.length) return null;
+  // Ein Backup schreibt alle drei zugleich; weichen sie doch ab, ist der
+  // aelteste Teil der ehrlichere Stand fuer die Seite als Ganzes.
+  const aeltester = zeiten.reduce((a, b) => (a < b ? a : b));
+  return `Stand vom ${aeltester.toLocaleDateString("de-DE")}`;
+}
+
+function nachsehenZeichnen() {
+  if (!els.nachsehenInhalt) return; // vor init() -- nichts zu zeichnen
+  const o = nachsehenOrt;
+  els.nachsehenInhalt.innerHTML = "";
+  els.nachsehenZurueck.hidden = o.ebene === "objekte";
+  els.nachsehenZurueck.innerHTML = icSvg("chevron-left") + " Zurück";
+
+  const stand = nachsehenStandText();
+  els.nachsehenStand.hidden = !stand;
+  if (stand) els.nachsehenStand.textContent = stand;
+
+  if (o.ebene === "kreis") zeichneKreis(o.kreis);
+  else if (o.ebene === "einheit") zeichneEinheit(o.einheitId);
+  else if (o.ebene === "aufgaben") zeichneAufgaben();
+  else zeichneObjekte();
+}
+
+// Ebene 1 -- die NK-Kreise, darunter der Einstieg in alle offenen Aufgaben.
+function zeichneObjekte() {
+  els.nachsehenTitel.textContent = "Objekte";
+  els.nachsehenUnterzeile.textContent = "";
+
+  const kreise = kreiseSammeln();
+
+  // Solange am Master noch kein Backup gelaufen ist, fehlen ALLE drei
+  // Bereiche. Dann steht hier EINE Erklaerung — nicht dieselbe Meldung
+  // zweimal, und kein Aufgaben-Knopf, der in eine leere Ebene fuehrt.
+  if (!kreise.length && !aufgabenListe().length) {
+    els.nachsehenInhalt.appendChild(leerZeile(
+      infobasisFehler.einheiten || infobasisFehler.aufgaben ||
+      "Noch nichts zum Nachsehen da."));
+    return;
+  }
+
+  if (!kreise.length) {
+    els.nachsehenInhalt.appendChild(
+      leerZeile(infobasisFehler.einheiten || "Keine Einheiten im Export."));
+  }
+  for (const [kreis, einheiten] of kreise) {
+    const frei = einheiten.filter((e) => !(e.vertraege || []).length).length;
+    const teile = [einheiten.length === 1 ? "1 Einheit" : `${einheiten.length} Einheiten`];
+    if (frei) teile.push(frei === 1 ? "1 leerstehend" : `${frei} leerstehend`);
+    els.nachsehenInhalt.appendChild(navZeile({
+      icon: "house", titel: kreis, unterzeile: teile.join(" · "),
+      ziel: { ebene: "kreis", kreis },
+    }));
+  }
+
+  const offene = aufgabenListe();
+  const dringend = offene.filter((a) => a.severity === "urgent").length;
+  els.nachsehenInhalt.appendChild(navZeile({
+    icon: "triangle-alert",
+    titel: "Offene Aufgaben",
+    unterzeile: infobasisFehler.aufgaben
+      ? infobasisFehler.aufgaben
+      : (offene.length ? `${offene.length} offen${dringend ? ` · ${dringend} dringend` : ""}` : "nichts offen"),
+    ziel: { ebene: "aufgaben" },
+  }));
+}
+
+// Ebene 2 -- die Einheiten EINES Kreises.
+function zeichneKreis(kreis) {
+  els.nachsehenTitel.textContent = kreis || OHNE_OBJEKT;
+  const einheiten = (kreiseSammeln().find(([k]) => k === kreis) || [null, []])[1];
+  els.nachsehenUnterzeile.textContent =
+    einheiten.length === 1 ? "1 Einheit" : `${einheiten.length} Einheiten`;
+
   if (!einheiten.length) {
-    els.infoEinheitenListe.innerHTML = '<p class="info-leer">Keine Einheiten.</p>';
+    els.nachsehenInhalt.appendChild(leerZeile("Keine Einheiten in diesem Objekt."));
     return;
   }
   for (const eh of einheiten) {
-    const karte = document.createElement("div");
-    karte.className = "info-karte";
-    const kopf = document.createElement("h3");
-    kopf.textContent = `${eh.objekt || "—"} · ${eh.bezeichnung}`;
-    karte.appendChild(kopf);
-    if (!eh.vertraege || !eh.vertraege.length) {
-      const leer = document.createElement("p");
-      leer.className = "info-leer";
-      leer.textContent = "Leerstehend.";
-      karte.appendChild(leer);
-    } else {
-      for (const v of eh.vertraege) {
-        const kontaktZeile = document.createElement("p");
-        kontaktZeile.className = "info-zeile";
-        const kontakt = [v.mieter_telefon, v.mieter_email].filter(Boolean).join(" · ");
-        kontaktZeile.innerHTML = `<strong>${v.mieter_name || "—"}</strong>${kontakt ? " · " + kontakt : ""}`;
-        karte.appendChild(kontaktZeile);
-
-        const eckdatenZeile = document.createElement("p");
-        eckdatenZeile.className = "info-zeile";
-        const eckdaten = [
-          v.kaltmiete != null ? `Kaltmiete ${v.kaltmiete} €` : null,
-          v.nk_vorauszahlung != null ? `NK-VZ ${v.nk_vorauszahlung} €` : null,
-          v.kaution != null ? `Kaution ${v.kaution} €` : null,
-        ].filter(Boolean);
-        eckdatenZeile.textContent = eckdaten.length ? eckdaten.join(" · ") : "—";
-        karte.appendChild(eckdatenZeile);
-      }
-    }
-    els.infoEinheitenListe.appendChild(karte);
+    const v = (eh.vertraege || [])[0];
+    const zaehlerN = zaehlerVonEinheit(eh.einheit_id).length;
+    const offenN = aufgabenVonEinheit(eh.einheit_id).length;
+    const zusatz = [];
+    if (zaehlerN) zusatz.push(zaehlerN === 1 ? "1 Zähler" : `${zaehlerN} Zähler`);
+    if (offenN) zusatz.push(offenN === 1 ? "1 Aufgabe" : `${offenN} Aufgaben`);
+    els.nachsehenInhalt.appendChild(navZeile({
+      icon: v ? "user" : "house",
+      titel: einheitLabel(eh),
+      unterzeile: v ? (v.mieter_name || "Mieter ohne Namen") : "Leerstehend",
+      hinweis: zusatz.join(" · ") || null,
+      ziel: { ebene: "einheit", kreis, einheitId: eh.einheit_id },
+    }));
   }
 }
 
-function renderInfobasisZaehlerstaende(daten) {
-  const stand = formatiereDatum(daten.erstellt_am);
-  els.infoZaehlerstaendeStand.textContent = stand ? `Stand vom ${stand}` : "Stand unbekannt.";
-  els.infoZaehlerstaendeListe.innerHTML = "";
-  const items = daten.zaehlerstaende || [];
-  if (!items.length) {
-    els.infoZaehlerstaendeListe.innerHTML = '<p class="info-leer">Keine Zähler.</p>';
+// Ebene 3 -- alles zu EINER Einheit auf einer Seite.
+function zeichneEinheit(einheitId) {
+  const eh = einheitFinden(einheitId);
+  if (!eh) {
+    els.nachsehenTitel.textContent = "Einheit";
+    els.nachsehenUnterzeile.textContent = "";
+    els.nachsehenInhalt.appendChild(
+      leerZeile("Diese Einheit steht nicht (mehr) im Export."));
     return;
   }
-  // 09.09.2026: EINE Karte je Einheit statt je Zaehler. Vorher trug jeder
-  // Zaehler seine Einheit als eigene Ueberschrift — bei den ueblichen vier
-  // Zaehlern je Einheit stand dieselbe Zeile viermal untereinander und man
-  // scrollte an lauter gleichen Kaepfen vorbei. Gruppiert wird nach dem
-  // gleichen Schluessel wie im Erfassen-Reiter (renderZaehlerliste), damit
-  // beide Listen dieselbe Ordnung zeigen.
-  const gruppen = new Map();
-  for (const item of items) {
-    const schluessel = item.einheit_bezeichnung_eindeutig || item.einheit_bezeichnung || "Ohne Einheit";
-    if (!gruppen.has(schluessel)) gruppen.set(schluessel, []);
-    gruppen.get(schluessel).push(item);
+  els.nachsehenTitel.textContent = einheitLabel(eh);
+  els.nachsehenUnterzeile.textContent = eh.objekt || OHNE_OBJEKT;
+
+  // --- Mieter (je aktivem Vertrag ein Block) ---
+  const vertraege = eh.vertraege || [];
+  const mieterBlock = abschnittBauen("user", vertraege.length > 1 ? "Mieter" : "Mieter");
+  if (!vertraege.length) {
+    mieterBlock.appendChild(leerZeile("Leerstehend."));
+  } else {
+    for (const v of vertraege) {
+      const name = document.createElement("p");
+      name.className = "info-zeile detail-name";
+      name.textContent = v.mieter_name || "Mieter ohne Namen";
+      mieterBlock.appendChild(name);
+
+      if (v.mieter_telefon) {
+        mieterBlock.appendChild(kontaktZeile(
+          "phone", v.mieter_telefon, `tel:${String(v.mieter_telefon).replace(/[^+\d]/g, "")}`));
+      }
+      if (v.mieter_email) {
+        mieterBlock.appendChild(kontaktZeile("mail", v.mieter_email, `mailto:${v.mieter_email}`));
+      }
+
+      const seit = formatiereDatum(v.beginn);
+      const bis = formatiereDatum(v.ende);
+      const dauer = mietdauerText(v.beginn, v.ende);
+      if (seit) {
+        const wohnt = bis
+          ? `${seit} bis ${bis}${dauer ? ` · ${dauer}` : ""}`
+          : `seit ${seit}${dauer ? ` · ${dauer}` : ""}`;
+        mieterBlock.appendChild(kontaktZeileErsatz("calendar-1", wohnt));
+      }
+    }
+  }
+  els.nachsehenInhalt.appendChild(mieterBlock);
+
+  // --- Vertrags-Eckdaten ---
+  if (vertraege.length) {
+    const geldBlock = abschnittBauen("euro", "Vertrag");
+    for (const v of vertraege) {
+      const posten = [
+        betragText(v.kaltmiete, "Kaltmiete"),
+        betragText(v.nk_vorauszahlung, "NK-Vorauszahlung"),
+        betragText(v.kaution, "Kaution"),
+      ].filter(Boolean);
+      if (!posten.length) {
+        geldBlock.appendChild(leerZeile("Keine Beträge hinterlegt."));
+      } else {
+        for (const p of posten) geldBlock.appendChild(zeileBauen(p));
+      }
+      const warm = [v.kaltmiete, v.nk_vorauszahlung]
+        .every((x) => x != null && Number.isFinite(Number(x)))
+        ? Number(v.kaltmiete) + Number(v.nk_vorauszahlung)
+        : null;
+      if (warm != null) {
+        geldBlock.appendChild(zeileBauen(betragText(warm, "Monatlich gesamt"), "detail-summe"));
+      }
+    }
+    els.nachsehenInhalt.appendChild(geldBlock);
   }
 
-  for (const [einheit, zaehler] of gruppen) {
-    const karte = document.createElement("div");
-    karte.className = "info-karte";
-    const kopf = document.createElement("h3");
-    kopf.textContent = einheit;
-    karte.appendChild(kopf);
-    for (const item of zaehler) {
-      const zeile = document.createElement("p");
-      zeile.className = "info-zeile";
-      const letzterStand = item.letzter_stand_wert != null
-        ? `${item.letzter_stand_wert} (${formatiereDatum(item.letzter_stand_datum) || "?"})`
+  // --- Zaehler dieser Einheit ---
+  const zaehler = zaehlerVonEinheit(einheitId);
+  const zBlock = abschnittBauen("clipboard-list", "Zähler");
+  if (!zaehlerListe().length && infobasisFehler.zaehlerstaende) {
+    zBlock.appendChild(leerZeile(infobasisFehler.zaehlerstaende));
+  } else if (!zaehler.length) {
+    zBlock.appendChild(leerZeile("Keine Zähler zu dieser Einheit."));
+  } else {
+    for (const z of zaehler) {
+      const stand = z.letzter_stand_wert != null
+        ? `${z.letzter_stand_wert} (${formatiereDatum(z.letzter_stand_datum) || "?"})`
         : "noch kein Stand erfasst";
-      zeile.textContent = `${zaehlerArtLabel(item.art)} · ${item.zaehlernummer || "ohne Nummer"} · ${letzterStand}`;
-      karte.appendChild(zeile);
+      zBlock.appendChild(zeileBauen(
+        `${zaehlerArtLabel(z.art)} · ${z.zaehlernummer || "ohne Nummer"} · ${stand}`));
     }
-    els.infoZaehlerstaendeListe.appendChild(karte);
   }
+  els.nachsehenInhalt.appendChild(zBlock);
+
+  // --- Offene Aufgaben dieser Einheit ---
+  const aufgaben = aufgabenVonEinheit(einheitId);
+  const aBlock = abschnittBauen("triangle-alert", "Offene Aufgaben");
+  if (!aufgabenListe().length && infobasisFehler.aufgaben) {
+    aBlock.appendChild(leerZeile(infobasisFehler.aufgaben));
+  } else if (!aufgaben.length) {
+    aBlock.appendChild(leerZeile("Nichts offen."));
+  } else {
+    for (const a of aufgaben) aBlock.appendChild(aufgabeKarte(a));
+  }
+  els.nachsehenInhalt.appendChild(aBlock);
 }
 
-function renderInfobasisAufgaben(daten) {
-  const stand = formatiereDatum(daten.erstellt_am);
-  els.infoAufgabenStand.textContent = stand ? `Stand vom ${stand}` : "Stand unbekannt.";
-  els.infoAufgabenListe.innerHTML = "";
-  const items = daten.aufgaben || [];
+// Datum-/Dauerzeile: gleiche Bauart wie kontaktZeile, nur ohne Link.
+function kontaktZeileErsatz(icon, text) {
+  const p = document.createElement("p");
+  p.className = "info-zeile kontakt-zeile";
+  p.innerHTML = icSvg(icon) + " ";
+  p.append(text);
+  return p;
+}
+
+function aufgabeKarte(a) {
+  const dringend = a.severity === "urgent";
+  const karte = document.createElement("div");
+  karte.className = "info-karte aufgabe-karte" + (dringend ? " severity-urgent" : "");
+  const kopf = document.createElement("h4");
+  kopf.className = "aufgabe-titel";
+  kopf.textContent = a.titel || a.kategorie || "Aufgabe";
+  karte.appendChild(kopf);
+  const text = [a.details, a.due_text].filter(Boolean).join(" · ");
+  if (text) {
+    karte.appendChild(zeileBauen(text, dringend ? "severity-urgent-text" : null));
+  }
+  return karte;
+}
+
+// Ebene "aufgaben" -- alle offenen Aufgaben, dringende zuerst.
+function zeichneAufgaben() {
+  els.nachsehenTitel.textContent = "Offene Aufgaben";
+  const items = [...aufgabenListe()].sort(
+    (a, b) => (b.severity === "urgent") - (a.severity === "urgent"));
+  els.nachsehenUnterzeile.textContent =
+    items.length === 1 ? "1 Aufgabe" : `${items.length} Aufgaben`;
+
   if (!items.length) {
-    els.infoAufgabenListe.innerHTML = '<p class="info-leer">Keine offenen Aufgaben.</p>';
+    els.nachsehenInhalt.appendChild(
+      leerZeile(infobasisFehler.aufgaben || "Nichts offen."));
     return;
   }
   for (const a of items) {
-    const dringend = a.severity === "urgent";
-    const karte = document.createElement("div");
-    karte.className = "info-karte aufgabe-karte" + (dringend ? " severity-urgent" : "");
-    const kopf = document.createElement("h3");
-    kopf.textContent = a.titel || a.kategorie || "Aufgabe";
-    karte.appendChild(kopf);
-    const zeile = document.createElement("p");
-    zeile.className = "info-zeile" + (dringend ? " severity-urgent-text" : "");
-    zeile.textContent = [a.details, a.due_text].filter(Boolean).join(" · ");
-    karte.appendChild(zeile);
-    els.infoAufgabenListe.appendChild(karte);
+    const karte = aufgabeKarte(a);
+    // Woher die Aufgabe kommt, steht in der Gesamtliste nicht im Titel —
+    // ohne die Einheit muesste man raten, welche Wohnung gemeint ist.
+    const eh = a.einheit_id != null ? einheitFinden(a.einheit_id) : null;
+    if (eh) {
+      karte.appendChild(zeileBauen(
+        `${eh.objekt || OHNE_OBJEKT} · ${einheitLabel(eh)}`, "aufgabe-herkunft"));
+    }
+    els.nachsehenInhalt.appendChild(karte);
   }
 }
 

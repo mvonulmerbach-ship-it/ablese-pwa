@@ -98,24 +98,23 @@
 
     <!-- A5 (v0.49.169): reiner Lese-Bereich -- "Daten, keine Funktionen"
          (Konzept). Nichts hier legt an, rechnet oder loest etwas aus. -->
+    <!-- 09.09.2026: aus den drei flachen Listen wird eine Ebene-fuer-Ebene-
+         Navigation (NK-Kreis -> Einheit -> Detail). Grund: unterwegs sucht
+         man EINE Einheit, und drei lange Listen untereinander heisst
+         scrollen statt finden. Der Bereich ist weiterhin reines Lesen --
+         nichts hier legt an, rechnet oder loest etwas aus. Gezeichnet wird
+         alles aus app.js in #nachsehen-inhalt; die Kopfzeile darueber
+         traegt Zurueck-Knopf, Ort und Datenstand. -->
     <div id="nachsehen-bereich" hidden>
-      <section class="infobasis-block">
-        <h2>Einheiten &amp; Mieter</h2>
-        <p id="infobasis-einheiten-stand" class="hinweis">Wird geladen …</p>
-        <div id="infobasis-einheiten-liste"></div>
-      </section>
-
-      <section class="infobasis-block">
-        <h2>Letzte Zählerstände</h2>
-        <p id="infobasis-zaehlerstaende-stand" class="hinweis">Wird geladen …</p>
-        <div id="infobasis-zaehlerstaende-liste"></div>
-      </section>
-
-      <section class="infobasis-block">
-        <h2>Offene Aufgaben</h2>
-        <p id="infobasis-aufgaben-stand" class="hinweis">Wird geladen …</p>
-        <div id="infobasis-aufgaben-liste"></div>
-      </section>
+      <div id="nachsehen-kopf">
+        <button type="button" id="nachsehen-zurueck" class="btn-zurueck" hidden></button>
+        <div class="nachsehen-titelblock">
+          <h2 id="nachsehen-titel">Objekte</h2>
+          <p id="nachsehen-unterzeile" class="nachsehen-unterzeile"></p>
+        </div>
+      </div>
+      <p id="nachsehen-stand" class="hinweis">Wird geladen …</p>
+      <div id="nachsehen-inhalt"></div>
     </div>
   </section>
 
