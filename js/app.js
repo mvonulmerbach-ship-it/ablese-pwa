@@ -18,6 +18,11 @@ const ZAEHLERLISTE_CACHE_SCHLUESSEL = "ablese_zaehlerliste_cache_v1";
 // Puffer für den Ablesetag, kein Langzeitlager (Geräte-Realität) — ab hier
 // mahnt die App sichtbar statt still weiter zu warten.
 const WARTESCHLANGE_MAHN_TAGE = 3;
+// 09.09.2026: so lange bleibt ein GESENDETER Eintrag noch liegen, bevor er
+// beim naechsten Start weggeraeumt wird (AbleseQueue.aufraeumen). Bewusst
+// deutlich laenger als die Mahnfrist: der Sinn ist Nachschauen-Koennen, nicht
+// Sparen. Offene Eintraege sind davon nie betroffen.
+const WARTESCHLANGE_SCHONFRIST_TAGE = 14;
 
 // A5 (v0.49.169): drei eigene Cache-Schlüssel, ein Datenbereich kann ohne
 // die anderen offline vorliegen (Muster ZAEHLERLISTE_CACHE_SCHLUESSEL).
@@ -78,6 +83,7 @@ async function init() {
   els.warteschlangeText = q("warteschlange-text");
   els.btnJetztSenden = q("btn-jetzt-senden");
   els.offlineHinweis = q("offline-hinweis");
+  els.sendeFehler = q("sende-fehler");
   els.feldDatum = q("feld-datum");
   els.feldAnlass = q("feld-anlass");
   els.einheitenListe = q("einheiten-liste");
@@ -150,6 +156,14 @@ async function init() {
 
   ladeZaehlerlisteAusCache();
   ladeInfobasisAusCache();
+  // Vor der ersten Anzeige aufraeumen, damit die Zaehlung stimmt. Ein Fehler
+  // hier darf den Start nicht aufhalten — die Erfassung ist wichtiger als
+  // ein aufgeraeumter Speicher.
+  try {
+    await AbleseQueue.aufraeumen(WARTESCHLANGE_SCHONFRIST_TAGE);
+  } catch (fehler) {
+    console.warn("Warteschlange konnte nicht aufgeräumt werden:", fehler);
+  }
   await aktualisiereWarteschlangenAnzeige();
   await synchronisieren();
   await zaehlerlisteVomGraphLaden();
@@ -268,19 +282,34 @@ function renderInfobasisZaehlerstaende(daten) {
     els.infoZaehlerstaendeListe.innerHTML = '<p class="info-leer">Keine Zähler.</p>';
     return;
   }
+  // 09.09.2026: EINE Karte je Einheit statt je Zaehler. Vorher trug jeder
+  // Zaehler seine Einheit als eigene Ueberschrift — bei den ueblichen vier
+  // Zaehlern je Einheit stand dieselbe Zeile viermal untereinander und man
+  // scrollte an lauter gleichen Kaepfen vorbei. Gruppiert wird nach dem
+  // gleichen Schluessel wie im Erfassen-Reiter (renderZaehlerliste), damit
+  // beide Listen dieselbe Ordnung zeigen.
+  const gruppen = new Map();
   for (const item of items) {
+    const schluessel = item.einheit_bezeichnung_eindeutig || item.einheit_bezeichnung || "Ohne Einheit";
+    if (!gruppen.has(schluessel)) gruppen.set(schluessel, []);
+    gruppen.get(schluessel).push(item);
+  }
+
+  for (const [einheit, zaehler] of gruppen) {
     const karte = document.createElement("div");
     karte.className = "info-karte";
     const kopf = document.createElement("h3");
-    kopf.textContent = item.einheit_bezeichnung_eindeutig || item.einheit_bezeichnung || "Ohne Einheit";
+    kopf.textContent = einheit;
     karte.appendChild(kopf);
-    const zeile = document.createElement("p");
-    zeile.className = "info-zeile";
-    const letzterStand = item.letzter_stand_wert != null
-      ? `${item.letzter_stand_wert} (${formatiereDatum(item.letzter_stand_datum) || "?"})`
-      : "noch kein Stand erfasst";
-    zeile.textContent = `${zaehlerArtLabel(item.art)} · ${item.zaehlernummer || "ohne Nummer"} · ${letzterStand}`;
-    karte.appendChild(zeile);
+    for (const item of zaehler) {
+      const zeile = document.createElement("p");
+      zeile.className = "info-zeile";
+      const letzterStand = item.letzter_stand_wert != null
+        ? `${item.letzter_stand_wert} (${formatiereDatum(item.letzter_stand_datum) || "?"})`
+        : "noch kein Stand erfasst";
+      zeile.textContent = `${zaehlerArtLabel(item.art)} · ${item.zaehlernummer || "ohne Nummer"} · ${letzterStand}`;
+      karte.appendChild(zeile);
+    }
     els.infoZaehlerstaendeListe.appendChild(karte);
   }
 }
@@ -526,9 +555,45 @@ async function aktualisiereWarteschlangenAnzeige() {
   }
 
   els.offlineHinweis.hidden = navigator.onLine;
+  zeigeSendeFehler();
 }
 
 let synchronisierungLaeuft = false;
+// 09.09.2026: der letzte Grund, warum ein Senden nicht durchkam. Vorher lief
+// jeder Fehlschlag NUR in console.warn — am Handy war ein "Jetzt senden", das
+// nichts tut, von einem erfolgreichen Senden nicht zu unterscheiden, und die
+// Warteschlange mahnte erst nach WARTESCHLANGE_MAHN_TAGE. Genau der Fall im
+// Keller (abgelaufene Anmeldung, Ordner nicht freigegeben, Pfad falsch).
+let letzterSendeFehler = null;
+
+// Die Graph-/MSAL-Meldungen sind englisch und technisch; die drei Fälle, die
+// am Handy wirklich vorkommen, bekommen deshalb Klartext. Alles andere wird
+// unverändert durchgereicht — lieber eine rohe Meldung als gar keine.
+function sendeFehlerText(fehler) {
+  const roh = fehler?.message || String(fehler);
+  if (/nicht angemeldet/i.test(roh)) {
+    return "Nicht (mehr) angemeldet — bitte oben neu anmelden, dann „Jetzt senden“.";
+  }
+  if (/^40[13]\b/.test(roh) || /accessDenied|unauthenticated/i.test(roh)) {
+    return `Keine Berechtigung für das Postfach: ${roh}`;
+  }
+  if (/nicht gefunden|itemNotFound|^404\b/i.test(roh)) {
+    return `Postfach-Ordner nicht gefunden: ${roh}`;
+  }
+  return `Senden fehlgeschlagen: ${roh}`;
+}
+
+function zeigeSendeFehler() {
+  // Ohne Netz erklärt der Offline-Hinweis die Lage schon — dann wäre eine
+  // zweite rote Zeile nur Lärm.
+  const zeigen = !!letzterSendeFehler && navigator.onLine;
+  els.sendeFehler.hidden = !zeigen;
+  if (zeigen) {
+    els.sendeFehler.textContent = "";
+    els.sendeFehler.insertAdjacentHTML("afterbegin", icSvg("triangle-alert") + " ");
+    els.sendeFehler.append(sendeFehlerText(letzterSendeFehler));
+  }
+}
 
 async function synchronisieren() {
   if (synchronisierungLaeuft) return;
@@ -538,6 +603,7 @@ async function synchronisieren() {
   }
   synchronisierungLaeuft = true;
   els.btnJetztSenden.disabled = true;
+  let fehlerDiesesLaufs = null;
   try {
     const offen = await AbleseQueue.offene();
     if (!offen.length) return;
@@ -551,11 +617,16 @@ async function synchronisieren() {
         // ab — er bleibt in der Warteschlange und wird beim nächsten
         // Versuch erneut probiert.
         console.warn("Ablesung konnte nicht gesendet werden:", eintrag.id, fehler);
+        fehlerDiesesLaufs = fehler;
       }
     }
   } catch (fehler) {
     console.warn("Synchronisierung übersprungen:", fehler);
+    fehlerDiesesLaufs = fehler;
   } finally {
+    // `return` bei leerer Warteschlange läuft auch hier durch — dann ist
+    // nichts schiefgegangen und eine alte Meldung darf nicht stehenbleiben.
+    letzterSendeFehler = fehlerDiesesLaufs;
     synchronisierungLaeuft = false;
     els.btnJetztSenden.disabled = false;
     await aktualisiereWarteschlangenAnzeige();

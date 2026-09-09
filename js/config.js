@@ -21,10 +21,16 @@ const ABLESE_KONFIG = {
   // wird dieser Name über "Für mich freigegeben" gesucht (graph.js).
   // Bestätigt A3-Session (14.08.2026); vorher A2-Namensvorschlag war
   // "Immobilien/Ablese-Postfach", inzwischen überholt.
-  postfachPfad: "Immobilien/Verwaltung/Ablesewerte",
+  // 09.09.2026: der Pfad stand root-relativ OHNE das Präfix "Dokumente/
+  // Arbeit/2-Grund-und Boden/" — im OneDrive-Root gibt es aber gar keinen
+  // Ordner "Immobilien"; der echte Ablesewerte-Ordner liegt darunter.
+  // Jeder Abruf lief damit ins Leere, ohne dass es je auffiel (der Master
+  // hat bis dahin auch nichts exportiert).
+  postfachPfad: "Dokumente/Arbeit/2-Grund-und Boden/Immobilien/Verwaltung/Ablesewerte",
   // A5 (v0.49.169): eigener, NIE freigegebener Ordner NEBEN dem Postfach
   // (backend/infobasis_export.py schreibt hierhin). Bewusst KEIN
   // sharedWithMe-Fallback wie beim Postfach — nur Max' eigenes Konto liest
   // ihn (graph.js::infobasisLesen), ein fremder Ableser sieht ihn nie.
-  infobasisPfad: "Immobilien/Infobasis",
+  // Pfad-Korrektur 09.09.2026 wie beim postfachPfad oben — derselbe Fehler.
+  infobasisPfad: "Dokumente/Arbeit/2-Grund-und Boden/Immobilien/Infobasis",
 };

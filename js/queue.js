@@ -61,6 +61,12 @@ const AbleseQueue = (() => {
         if (!eintrag) return resolve(null);
         eintrag.gesendet = true;
         eintrag.gesendet_am = new Date().toISOString();
+        // 09.09.2026: das Beleg-Foto liegt jetzt in OneDrive und wird hier
+        // nie wieder gebraucht. Es ist mit Abstand der groesste Teil eines
+        // Eintrags (ein 1600-px-JPEG sind schnell 300 KB gegen ~300 Byte
+        // Nutzdaten) — ohne dieses Loeschen traegt das Handy einen ganzen
+        // Ablesegang als Bilderstapel weiter mit sich herum.
+        delete eintrag.fotoBlob;
         const putReq = store.put(eintrag);
         putReq.onsuccess = () => resolve(eintrag);
         putReq.onerror = () => reject(putReq.error);
@@ -75,5 +81,33 @@ const AbleseQueue = (() => {
     return offen.reduce((a, b) => (a.erstellt_am < b.erstellt_am ? a : b));
   }
 
-  return { hinzufuegen, alle, offene, alsGesendetMarkieren, aeltesterOffenerEintrag };
+  // 09.09.2026: gesendete Eintraege wurden bisher nur markiert und blieben
+  // fuer immer liegen — im Widerspruch zum "Puffer fuer den Ablesetag, kein
+  // Langzeitlager" ganz oben. Geloescht wird erst nach der Schonfrist, damit
+  // Max am Abend noch nachsehen kann, was er morgens erfasst hat. OFFENE
+  // Eintraege ruehrt diese Funktion NIE an, egal wie alt sie sind: sie sind
+  // das Einzige, was einen noch nicht uebertragenen Zaehlerstand haelt.
+  async function aufraeumen(schonfristTage) {
+    const grenze = Date.now() - schonfristTage * 86400000;
+    const zuAlt = (await alle()).filter(
+      (e) => e.gesendet && new Date(e.gesendet_am || e.erstellt_am).getTime() < grenze
+    );
+    if (!zuAlt.length) return 0;
+    const store = await transaktion("readwrite");
+    await Promise.all(
+      zuAlt.map(
+        (e) =>
+          new Promise((resolve) => {
+            const req = store.delete(e.id);
+            // Ein misslungenes Loeschen ist folgenlos — der Eintrag ist
+            // gesendet, er wird beim naechsten Start erneut angeboten.
+            req.onsuccess = () => resolve();
+            req.onerror = () => resolve();
+          })
+      )
+    );
+    return zuAlt.length;
+  }
+
+  return { hinzufuegen, alle, offene, alsGesendetMarkieren, aeltesterOffenerEintrag, aufraeumen };
 })();

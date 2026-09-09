@@ -3,6 +3,14 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
+// v5: 09.09.2026 — der fetch-Handler war reines Cache-first: was einmal in
+// der Huelle lag, wurde NIE wieder vom Netz geholt. Jede Korrektur (auch die
+// am Postfach-Pfad in js/config.js) erreichte ein Geraet nur, wenn jemand
+// daran dachte, hier die Version hochzuzaehlen — sonst lief das Handy
+// stillschweigend weiter mit dem alten Stand. Jetzt "aus dem Cache zeigen,
+// im Hintergrund erneuern": die App startet im Keller weiter sofort, holt
+// aber bei Netz jede Datei nach, sodass das naechste Oeffnen aktuell ist.
+// Der Versionsdreh bleibt trotzdem sinnvoll, wenn eine Datei WEGFAELLT.
 // v4: 01.09.2026 — die Icons kommen jetzt aus dem EIGENEN Zeichen der
 // Mietverwaltung (das Schild, tools/icons_erzeugen.py dort). Ein Geraet mit
 // der v3-Huelle traegt sonst weiter das Donauwinkel der Gutsverwaltung —
@@ -11,7 +19,7 @@
 // v3: 01.09.2026 — die Icons kamen aus dem Hauslogo der Gutsverwaltung.
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
-const CACHE_NAME = "ablese-huelle-v4";
+const CACHE_NAME = "ablese-huelle-v5";
 const HUELLE = [
   "./",
   "index.html",
@@ -29,8 +37,14 @@ const HUELLE = [
   "vendor/msal/msal-browser.min.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
+  // v5: die drei fehlten — das maskable Icon steht im Manifest (Android
+  // zeichnet damit das Startbildschirm-Symbol) und die beiden kleinen
+  // Favicons in index.html. Ohne Netz blieben sie leer.
+  "icons/icon-512-maskable.png",
   "icons/favicon.svg",
+  "icons/favicon-16.png",
   "icons/favicon-32.png",
+  "icons/favicon-48.png",
   "icons/apple-touch-icon.png",
 ];
 
@@ -59,8 +73,29 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(event.request).then((treffer) => {
-      if (treffer) return treffer;
-      return fetch(event.request).catch(() => caches.match("index.html"));
+      // Im Hintergrund immer nachladen und die Huelle auffrischen. Laeuft
+      // absichtlich NEBEN der Antwort: der Keller-Start wartet nie darauf.
+      const nachladen = fetch(event.request)
+        .then((antwort) => {
+          // Nur vollstaendige eigene Antworten cachen — ein 404 oder eine
+          // abgeschnittene 206 wuerde die Huelle sonst vergiften.
+          if (antwort && antwort.ok && antwort.status === 200) {
+            const kopie = antwort.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, kopie));
+          }
+          return antwort;
+        })
+        .catch(() => null);
+
+      if (treffer) {
+        // Der Cache antwortet sofort; das Nachladen darf den Worker
+        // ueberleben, sonst bricht es beim Beenden ab.
+        event.waitUntil(nachladen);
+        return treffer;
+      }
+      // Nichts im Cache: auf das Netz warten, und wenn auch das nichts
+      // liefert, die Huelle zeigen (Navigation aus dem Funkloch heraus).
+      return nachladen.then((antwort) => antwort || caches.match("index.html"));
     })
   );
 });

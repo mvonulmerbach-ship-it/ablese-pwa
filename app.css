@@ -84,6 +84,15 @@ main { padding: var(--abstand-4); max-width: 640px; margin: 0 auto; }
   border-color: var(--chip-mittel-punkt);
   color: var(--chip-mittel-text);
 }
+/* 09.09.2026: eine Stufe schaerfer als die Warnung — ein fehlgeschlagenes
+   Senden ist kein Hinweis, sondern ein Zustand, der Max' Zutun braucht.
+   Dieselbe Token-Regel wie oben: die Chip-Stufe "hoch" hat eine
+   Dunkelfassung, die rohen --fehler-*-Stufen haetten keine. */
+.hinweis-fehler {
+  background: var(--chip-hoch-bg);
+  border-color: var(--chip-hoch-punkt);
+  color: var(--chip-hoch-text);
+}
 
 .leiste {
   display: flex;

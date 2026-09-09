@@ -79,6 +79,10 @@
       <p id="offline-hinweis" class="hinweis hinweis-warnung" hidden>
         Kein Netz — Einträge werden lokal gespeichert und beim nächsten Öffnen/Senden übertragen.
       </p>
+      <!-- 09.09.2026: Grund eines fehlgeschlagenen Sendens. Text kommt aus
+           app.js::zeigeSendeFehler; bis dahin landete jeder Fehlschlag nur
+           in der Browser-Konsole und war am Handy unsichtbar. -->
+      <p id="sende-fehler" class="hinweis hinweis-fehler" hidden></p>
 
       <div id="erfassung-kopf">
         <label>Datum
