@@ -742,25 +742,68 @@ function renderZaehlerliste() {
     ? `Zählerliste vom ${stand}`
     : "Zählerliste geladen.";
 
-  const gruppen = new Map();
+  // 09.09.2026: ZWEI Ebenen statt einer — NK-Kreis, darunter die Einheiten.
+  // Eine durchgehende Einheitenliste half beim Ablesegang nicht: man steht
+  // in EINEM Objekt und will dessen Zähler beisammen haben.
+  //
+  // `nk_kreis_name` und `vermieter_name` liefert die zaehlerliste.json
+  // längst mit (backend/ablesung.py::baue_ablese_liste) — auch einem
+  // fremden Ableser (A3), der die Infobasis nie zu sehen bekommt.
+  //
+  // NICHT neu sortiert: die Reihenfolge des Exports (Vermieter, Einheit,
+  // Art) bleibt, wie sie ist, und die Gruppen erscheinen in der Reihenfolge
+  // ihres ersten Auftretens. So steht am Handy dieselbe Ordnung wie in der
+  // Ableseliste am Master — eine eigene Sortierung hier würde genau die
+  // Vertrautheit zerstören, wegen der man sich am Papier orientiert.
+  const kreise = new Map();
   for (const item of zaehlerlisteAktuell.zaehler || []) {
-    const schluessel = item.einheit_bezeichnung_eindeutig || item.einheit_bezeichnung || "Ohne Einheit";
-    if (!gruppen.has(schluessel)) gruppen.set(schluessel, []);
-    gruppen.get(schluessel).push(item);
+    const kreisName = item.nk_kreis_name || OHNE_OBJEKT;
+    if (!kreise.has(kreisName)) {
+      kreise.set(kreisName, { vermieter: item.vermieter_name || null, einheiten: new Map() });
+    }
+    const kreis = kreise.get(kreisName);
+    const einheitName =
+      item.einheit_bezeichnung_eindeutig || item.einheit_bezeichnung || "Ohne Einheit";
+    if (!kreis.einheiten.has(einheitName)) kreis.einheiten.set(einheitName, []);
+    kreis.einheiten.get(einheitName).push(item);
   }
 
-  els.einheitenListe.innerHTML = "";
-  for (const [einheit, items] of gruppen) {
-    const karte = document.createElement("section");
-    karte.className = "einheit-karte";
-    const titel = document.createElement("h2");
-    titel.textContent = einheit;
-    karte.appendChild(titel);
+  // Zähler ohne NK-Kreis ans Ende — benannt, nicht weggelassen (Regel .109).
+  const geordnet = [...kreise.entries()].sort((a, b) => {
+    if (a[0] === OHNE_OBJEKT) return 1;
+    if (b[0] === OHNE_OBJEKT) return -1;
+    return 0;                                   // sonst: Export-Reihenfolge
+  });
 
-    for (const item of items) {
-      karte.appendChild(baueZaehlerZeile(item));
+  els.einheitenListe.innerHTML = "";
+  for (const [kreisName, kreis] of geordnet) {
+    const gruppe = document.createElement("section");
+    gruppe.className = "kreis-gruppe";
+
+    const kopf = document.createElement("h2");
+    kopf.className = "kreis-kopf";
+    kopf.innerHTML = icSvg("house") + " ";
+    kopf.append(kreisName);
+    if (kreis.vermieter) {
+      const v = document.createElement("span");
+      v.className = "kreis-vermieter";
+      v.textContent = kreis.vermieter;
+      kopf.appendChild(v);
     }
-    els.einheitenListe.appendChild(karte);
+    gruppe.appendChild(kopf);
+
+    for (const [einheit, items] of kreis.einheiten) {
+      const karte = document.createElement("section");
+      karte.className = "einheit-karte";
+      const titel = document.createElement("h3");
+      titel.textContent = einheit;
+      karte.appendChild(titel);
+      for (const item of items) {
+        karte.appendChild(baueZaehlerZeile(item));
+      }
+      gruppe.appendChild(karte);
+    }
+    els.einheitenListe.appendChild(gruppe);
   }
 }
 

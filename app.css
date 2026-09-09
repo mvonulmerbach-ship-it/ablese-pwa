@@ -183,12 +183,41 @@ select:focus-visible {
   padding: var(--abstand-4);
   margin-bottom: var(--abstand-4);
 }
-.einheit-karte h2 {
+.einheit-karte h3 {
   margin: 0 0 10px;
   font-size: 1.05rem;
   color: var(--text-stark);
   border-bottom: 1px solid var(--linie);
   padding-bottom: var(--abstand-2);
+}
+
+/* 09.09.2026: die Zaehlerliste ist nach NK-Kreis gruppiert (Ordnung wie in
+   der Ableseliste am Master). Die Kreis-Ueberschrift steht bewusst AUSSEN
+   vor den Karten und nicht als weitere Karte: sonst haette man Karte in
+   Karte, und am schmalen Bildschirm frisst jede Verschachtelung Breite. */
+.kreis-gruppe { margin-bottom: var(--abstand-5); }
+.kreis-kopf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--abstand-3);
+  padding: 0 2px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-schwach);
+}
+/* Der Vermieter steht rechts und tritt zurueck — er unterscheidet die
+   Kreise nur dann, wenn es mehrere Vermieter gibt. */
+.kreis-vermieter {
+  margin-left: auto;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .zaehler-zeile {
