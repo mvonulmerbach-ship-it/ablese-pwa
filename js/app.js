@@ -816,15 +816,23 @@ function baueZaehlerZeile(item) {
   const letzterStand = item.letzter_stand_wert != null
     ? `letzter Stand ${item.letzter_stand_wert} (${formatiereDatum(item.letzter_stand_datum) || "?"})`
     : "noch kein Stand erfasst";
-  kopf.innerHTML = `<strong>${zaehlerArtLabel(item.art)}</strong> · ${item.zaehlernummer || "ohne Nummer"}
-    <span class="hinweis-klein">${letzterStand}</span>`;
+  // 15.09.2026 (W68/F69): Zählernummer und Stand kommen aus der Zählerliste
+  // — als Text gesetzt, nicht als HTML.
+  const kopfArt = document.createElement("strong");
+  kopfArt.textContent = zaehlerArtLabel(item.art);
+  const kopfStand = document.createElement("span");
+  kopfStand.className = "hinweis-klein";
+  kopfStand.textContent = letzterStand;
+  kopf.append(kopfArt, ` · ${item.zaehlernummer || "ohne Nummer"} `, kopfStand);
 
   const eingabe = document.createElement("div");
   eingabe.className = "zaehler-eingabe";
   const input = document.createElement("input");
-  input.type = "number";
-  input.step = "0.001";
+  // 15.09.2026 (W68/F64): Text mit Dezimal-Tastatur statt `type="number"` —
+  // gelesen wird mit der deutschen Regel in js/zahl.js.
+  input.type = "text";
   input.inputMode = "decimal";
+  input.autocomplete = "off";
   input.placeholder = "Zählerstand";
   input.id = `wert-${item.zaehler_id}`;
 
@@ -885,16 +893,36 @@ async function fotoKomprimieren(datei) {
   });
 }
 
+const STAND_PRUEFEN_TEXT =
+  "Bitte prüfen: Punkt nur als Tausender (12.345), Dezimalstellen mit Komma (12,5).";
+
 async function erfassenKlick(item, input, btn, fotoInput, fotoBtn) {
-  const wertText = input.value.trim();
-  const wert = parseFloat(wertText);
-  if (!wertText || Number.isNaN(wert)) {
+  // 15.09.2026 (W68/F65): ein Doppel-Tipp erzeugte zwei Dateien — der Knopf
+  // blieb während der Foto-Kompression und des Speicherns bedienbar, und am
+  // Master endeten zwei Ablesungen desselben Zählers am selben Tag im 500.
+  if (btn.disabled) return;
+  const gelesen = AbleseZahl.leseStand(input.value);
+  const wert = gelesen.wert;
+  if (wert == null || Number.isNaN(wert)) {
     input.focus();
     input.classList.add("feld-fehler");
+    input.title = gelesen.pruefen ? STAND_PRUEFEN_TEXT : "";
+    input.setCustomValidity?.(gelesen.pruefen ? STAND_PRUEFEN_TEXT : "");
+    input.reportValidity?.();
     return;
   }
   input.classList.remove("feld-fehler");
+  input.title = "";
+  input.setCustomValidity?.("");
+  btn.disabled = true;
+  try {
+    await erfassenSpeichern(item, input, btn, fotoInput, fotoBtn, wert);
+  } finally {
+    btn.disabled = false;
+  }
+}
 
+async function erfassenSpeichern(item, input, btn, fotoInput, fotoBtn, wert) {
   const konto = AbleseAuth.konto();
   const eintrag = {
     id: (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
@@ -991,8 +1019,16 @@ function zeigeSendeFehler() {
   }
 }
 
+// 15.09.2026 (W68/F68): wer während einer laufenden Übertragung erfasst,
+// wartete bis zum nächsten Anstoß — der zweite Aufruf kehrte einfach um.
+// Jetzt merkt er sich den Wunsch, und der laufende Lauf hängt einen an.
+let synchronisierungNachlauf = false;
+
 async function synchronisieren() {
-  if (synchronisierungLaeuft) return;
+  if (synchronisierungLaeuft) {
+    synchronisierungNachlauf = true;
+    return;
+  }
   if (!navigator.onLine) {
     await aktualisiereWarteschlangenAnzeige();
     return;
@@ -1026,6 +1062,10 @@ async function synchronisieren() {
     synchronisierungLaeuft = false;
     els.btnJetztSenden.disabled = false;
     await aktualisiereWarteschlangenAnzeige();
+    if (synchronisierungNachlauf) {
+      synchronisierungNachlauf = false;
+      synchronisieren();
+    }
   }
 }
 

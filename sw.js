@@ -3,6 +3,10 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
+// v6: 15.09.2026 — js/zahl.js ist neu (Zählerstand deutsch lesen, W68/F64),
+// dazu Doppel-Tipp-Sperre, Ordner-Anlage mit „:/children“, Redirect nur bei
+// nötiger Anmeldung. Die neue Datei MUSS in die Huelle, sonst fehlt der
+// Leser offline — und app.js wirft beim ersten Erfassen.
 // v5: 09.09.2026 — der fetch-Handler war reines Cache-first: was einmal in
 // der Huelle lag, wurde NIE wieder vom Netz geholt. Jede Korrektur (auch die
 // am Postfach-Pfad in js/config.js) erreichte ein Geraet nur, wenn jemand
@@ -19,7 +23,7 @@
 // v3: 01.09.2026 — die Icons kamen aus dem Hauslogo der Gutsverwaltung.
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
-const CACHE_NAME = "ablese-huelle-v5";
+const CACHE_NAME = "ablese-huelle-v6";
 const HUELLE = [
   "./",
   "index.html",
@@ -30,6 +34,7 @@ const HUELLE = [
   "js/icons.js",
   "js/theme.js",
   "js/config.js",
+  "js/zahl.js",
   "js/queue.js",
   "js/auth.js",
   "js/graph.js",

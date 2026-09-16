@@ -106,7 +106,13 @@ const AbleseGraph = (() => {
       const eltern = bisher;
       bisher = eltern ? `${eltern}/${teil}` : teil;
       if (await elementVorhanden(token, basis, bisher)) continue;
-      const zielUrl = `${elementUrl(basis, eltern || null)}/children`;
+      // 15.09.2026 (W68/F66): eine PFAD-Adresse braucht den schließenden
+      // Doppelpunkt vor der Aktion („root:/a/b:/children“, wie „:/content“
+      // unten) — ohne ihn las Graph „children“ als Teil des Pfads, und der
+      // erste Foto-Upload scheiterte an „eingang/fotos“. Eine ID-Adresse
+      // („items/{id}“) trägt keinen Pfad und bekommt „/children“.
+      const elternUrl = elementUrl(basis, eltern || null);
+      const zielUrl = elternUrl.includes(":/") ? `${elternUrl}:/children` : `${elternUrl}/children`;
       const resp = await fetch(zielUrl, {
         method: "POST",
         headers: kopfzeilen(token, "application/json"),

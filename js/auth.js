@@ -37,6 +37,13 @@ const AbleseAuth = (() => {
     return bereitPromise;
   }
 
+  // Braucht der Fehler eine Anmeldung durch den Menschen? MSAL meldet das als
+  // InteractionRequiredAuthError (Klasse oder Name — je nach Bündel-Stand).
+  function interaktionNoetig(fehler) {
+    const Klasse = typeof msal !== "undefined" ? msal.InteractionRequiredAuthError : undefined;
+    return (!!Klasse && fehler instanceof Klasse) || fehler?.name === "InteractionRequiredAuthError";
+  }
+
   function konto() {
     if (!msalApp) return null;
     const konten = msalApp.getAllAccounts();
@@ -67,6 +74,11 @@ const AbleseAuth = (() => {
     } catch (fehler) {
       // Stiller Token-Bezug scheitert typischerweise, wenn die Zustimmung
       // erneut nötig ist (z. B. abgelaufene Sitzung) — dann interaktiv.
+      // 15.09.2026 (W68/F67): NUR dann. Ein Netzfehler im Keller löste bis
+      // hierher ebenfalls die Weiterleitung aus — die Seite verließ sich
+      // selbst, ohne Netz. Jetzt geht der Fehler an den Aufrufer, die
+      // Warteschlange bleibt, und der nächste Anstoß versucht es erneut.
+      if (!interaktionNoetig(fehler)) throw fehler;
       await msalApp.acquireTokenRedirect(anfrage);
       // acquireTokenRedirect verlässt die Seite; dieser Rückgabewert wird
       // praktisch nie erreicht.
