@@ -3,6 +3,11 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
+// v7: 28.09.2026 — Mietverwaltung K137: Eingaben und Fotos bleiben beim
+// Nachladen der Zählerliste, ein Funkloch heilt von selbst (Zählerliste und
+// Infobasis laden nach), unendliche Stände werden markiert, ein unlesbares
+// Foto wird benannt. Keine neue Datei — der Versionsdreh holt js/app.js und
+// js/zahl.js sofort statt beim übernächsten Öffnen.
 // v6: 15.09.2026 — js/zahl.js ist neu (Zählerstand deutsch lesen, W68/F64),
 // dazu Doppel-Tipp-Sperre, Ordner-Anlage mit „:/children“, Redirect nur bei
 // nötiger Anmeldung. Die neue Datei MUSS in die Huelle, sonst fehlt der
@@ -23,7 +28,7 @@
 // v3: 01.09.2026 — die Icons kamen aus dem Hauslogo der Gutsverwaltung.
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
-const CACHE_NAME = "ablese-huelle-v6";
+const CACHE_NAME = "ablese-huelle-v7";
 const HUELLE = [
   "./",
   "index.html",

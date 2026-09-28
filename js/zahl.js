@@ -14,10 +14,21 @@
 //
 // Dieselbe Tausender-Regel wie `parseDeZahl` im Master, nur strenger beim
 // einzelnen Punkt: am Handy tippt man Stände, keine Beträge mit Cent-Punkt.
+//
+// 28.09.2026 (Mietverwaltung K137/F194): ab rund 310 Ziffern liefert
+// `parseFloat` `Infinity`; `JSON.stringify` machte daraus `"wert": null`, und
+// der Master meldete „unvollständig“. Jeder Wert muss `Number.isFinite`
+// bestehen, sonst wird das Feld markiert wie bei „1.5“.
 "use strict";
 
 const AbleseZahl = (() => {
   const TAUSENDER = /^\d{1,3}(\.\d{3})+$/;
+
+  function fertig(wert) {
+    return Number.isFinite(wert)
+      ? { wert, pruefen: false, leer: false }
+      : { wert: null, pruefen: true, leer: false };
+  }
 
   function leseStand(text) {
     const s = String(text ?? "").replace(/[\s ]/g, "");
@@ -31,10 +42,10 @@ const AbleseZahl = (() => {
       }
       const ganz = ganzRoh.replace(/\./g, "");
       if (ganz === "" && nach === "") return { wert: null, pruefen: true, leer: false };
-      return { wert: parseFloat(`${ganz || "0"}.${nach || "0"}`), pruefen: false, leer: false };
+      return fertig(parseFloat(`${ganz || "0"}.${nach || "0"}`));
     }
-    if (!s.includes(".")) return { wert: parseFloat(s), pruefen: false, leer: false };
-    if (TAUSENDER.test(s)) return { wert: parseFloat(s.replace(/\./g, "")), pruefen: false, leer: false };
+    if (!s.includes(".")) return fertig(parseFloat(s));
+    if (TAUSENDER.test(s)) return fertig(parseFloat(s.replace(/\./g, "")));
     return { wert: null, pruefen: true, leer: false };
   }
 

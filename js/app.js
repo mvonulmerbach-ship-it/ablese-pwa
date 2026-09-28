@@ -42,7 +42,15 @@ const INFOBASIS_DATEIEN = {
     datei: "aufgaben.json", cacheKey: "ablese_infobasis_aufgaben_v1",
   },
 };
-let infobasisGeladen = false; // Graph-Abruf nur beim ersten Wechsel auf "Nachsehen"
+// Graph-Abruf erst beim ersten Wechsel auf "Nachsehen". 28.09.2026
+// (Mietverwaltung K137/F193): `infobasisGeladen` wird erst nach ERFOLG
+// gesetzt — vorher stand es vor dem Abruf auf true, und wer offline auf
+// „Nachsehen“ tippte, bekam die Infobasis in dieser Sitzung nie mehr.
+// `infobasisGewuenscht` merkt sich den Wunsch, damit `wiederOnline()` nachlädt.
+let infobasisGeladen = false;
+let infobasisGewuenscht = false;
+let infobasisLaedt = false;
+const OFFLINE_SATZ = "Offline — wird geladen, sobald wieder Netz da ist.";
 
 // Die zuletzt geladenen Rohdaten je Bereich; null = für diesen Bereich liegt
 // noch nichts vor. Bewusst EIN Speicher statt drei gerenderter Listen: die
@@ -138,7 +146,7 @@ async function init() {
     }
   });
   els.btnJetztSenden.addEventListener("click", () => synchronisieren());
-  window.addEventListener("online", () => synchronisieren());
+  window.addEventListener("online", () => wiederOnline());
 
   els.reiterErfassen.addEventListener("click", () => zeigeReiter("erfassen"));
   els.reiterNachsehen.addEventListener("click", () => zeigeReiter("nachsehen"));
@@ -199,11 +207,18 @@ function zeigeReiter(name) {
     // Der Ort bleibt erhalten: wer zum Erfassen wechselt und zurueckkommt,
     // steht wieder bei der Einheit, die er angesehen hat.
     nachsehenZeichnen();
-    if (!infobasisGeladen) {
-      infobasisGeladen = true;
-      infobasisVomGraphLaden();
-    }
+    infobasisGewuenscht = true;
+    if (!infobasisGeladen) infobasisVomGraphLaden();
   }
+}
+
+// 28.09.2026 (Mietverwaltung K137/F192): nach einem Funkloch lädt das
+// `online`-Ereignis alles nach, was fehlt — bis dahin sendete es nur die
+// Warteschlange, und „Zählerliste wird geladen …“ blieb stehen.
+function wiederOnline() {
+  synchronisieren();
+  zaehlerlisteVomGraphLaden();
+  if (infobasisGewuenscht && !infobasisGeladen) infobasisVomGraphLaden();
 }
 
 function ladeInfobasisAusCache() {
@@ -220,18 +235,35 @@ function ladeInfobasisAusCache() {
 }
 
 async function infobasisVomGraphLaden() {
-  if (!navigator.onLine) return;
-  let token;
-  try {
-    token = await AbleseAuth.tokenHolen();
-  } catch {
-    return; // Anmeldung abgelaufen -- Cache bleibt sichtbar, kein Absturz
+  if (!navigator.onLine) {
+    // Offline ein Satz statt eines Leerlaufs — nur dort, wo nichts aus dem
+    // Cache zu zeigen ist (K137/F193).
+    for (const key of Object.keys(INFOBASIS_DATEIEN)) {
+      if (!infobasisDaten[key]) infobasisFehler[key] = OFFLINE_SATZ;
+    }
+    nachsehenZeichnen();
+    return;
   }
-  await Promise.all(
-    Object.entries(INFOBASIS_DATEIEN).map(([key, teil]) => ladeInfobasisTeil(token, key, teil))
-  );
+  if (infobasisLaedt) return;
+  infobasisLaedt = true;
+  try {
+    let token;
+    try {
+      token = await AbleseAuth.tokenHolen();
+    } catch {
+      return; // Anmeldung abgelaufen -- Cache bleibt sichtbar, kein Absturz
+    }
+    const erfolge = await Promise.all(
+      Object.entries(INFOBASIS_DATEIEN).map(([key, teil]) => ladeInfobasisTeil(token, key, teil))
+    );
+    infobasisGeladen = erfolge.every(Boolean);
+  } finally {
+    infobasisLaedt = false;
+  }
 }
 
+// Gibt zurück, ob der Graph geantwortet hat — auch „noch kein Export“ ist
+// eine Antwort; nur ein Fehler lässt den Teil beim nächsten Anlass nachladen.
 async function ladeInfobasisTeil(token, key, teil) {
   try {
     const daten = await AbleseGraph.infobasisLesen(token, teil.datei);
@@ -239,12 +271,13 @@ async function ladeInfobasisTeil(token, key, teil) {
       infobasisFehler[key] =
         "Noch kein Export vorhanden — läuft am Master automatisch beim nächsten Backup (A5).";
       nachsehenZeichnen();
-      return;
+      return true;
     }
     localStorage.setItem(teil.cacheKey, JSON.stringify(daten));
     infobasisDaten[key] = daten;
     infobasisFehler[key] = null;
     nachsehenZeichnen();
+    return true;
   } catch (fehler) {
     // Mit Cache im Ruecken bleibt der zuletzt geladene Stand sichtbar —
     // gemeldet wird nur, wenn dieser Bereich sonst gar nichts zu zeigen hat.
@@ -252,6 +285,7 @@ async function ladeInfobasisTeil(token, key, teil) {
       infobasisFehler[key] = `Konnte nicht geladen werden: ${fehler.message || fehler}`;
       nachsehenZeichnen();
     }
+    return false;
   }
 }
 
@@ -714,7 +748,12 @@ function ladeZaehlerlisteAusCache() {
 }
 
 async function zaehlerlisteVomGraphLaden() {
-  if (!navigator.onLine) return;
+  if (!navigator.onLine) {
+    // K137/F192: ohne Liste aus dem Cache steht ein Satz da, kein
+    // „wird geladen …“, das nie endet; `wiederOnline()` lädt nach.
+    if (!zaehlerlisteAktuell) els.zaehlerlisteStand.textContent = OFFLINE_SATZ;
+    return;
+  }
   try {
     const token = await AbleseAuth.tokenHolen();
     const daten = await AbleseGraph.zaehlerlisteLesen(token);
@@ -723,8 +762,14 @@ async function zaehlerlisteVomGraphLaden() {
         "Noch keine Zählerliste im Postfach — am Master exportieren (A1).";
       return;
     }
+    // K137/F191: die Liste steht meist schon aus dem Cache, und wer tippt,
+    // während der Graph antwortet, verlor Stand und Foto beim Neuzeichnen.
+    // Unverändert → nichts zeichnen; geändert → `renderZaehlerliste`
+    // nimmt die offenen Eingaben mit.
+    const roh = JSON.stringify(daten);
+    if (zaehlerlisteAktuell && roh === JSON.stringify(zaehlerlisteAktuell)) return;
     zaehlerlisteAktuell = daten;
-    localStorage.setItem(ZAEHLERLISTE_CACHE_SCHLUESSEL, JSON.stringify(daten));
+    localStorage.setItem(ZAEHLERLISTE_CACHE_SCHLUESSEL, roh);
     renderZaehlerliste();
   } catch (fehler) {
     if (!zaehlerlisteAktuell) {
@@ -732,6 +777,36 @@ async function zaehlerlisteVomGraphLaden() {
     }
     // Mit Cache im Rücken bleibt die zuletzt geladene Liste sichtbar — ein
     // einzelner fehlgeschlagener Abruf blockiert die Erfassung nicht.
+  }
+}
+
+// K137/F191: was in den Zeilen schon getippt oder fotografiert ist, je
+// `zaehler_id` — ein Neuzeichnen legt die Felder neu an.
+function offeneEingabenMerken() {
+  const offen = new Map();
+  if (!els.einheitenListe) return offen;
+  for (const input of els.einheitenListe.querySelectorAll('input[id^="wert-"]')) {
+    const id = String(input.id).slice("wert-".length);
+    const foto = document.getElementById(`foto-${id}`);
+    const dateien = foto?.files?.length ? foto.files : null;
+    if (input.value !== "" || dateien) offen.set(id, { wert: input.value, dateien });
+  }
+  return offen;
+}
+
+function offeneEingabenZurueck(offen) {
+  for (const [id, e] of offen) {
+    const input = document.getElementById(`wert-${id}`);
+    if (input && e.wert) input.value = e.wert;
+    const foto = document.getElementById(`foto-${id}`);
+    if (!foto || !e.dateien) continue;
+    try {
+      foto.files = e.dateien;
+      foto.dispatchEvent(new Event("change"));   // Haken am Kamera-Knopf
+    } catch {
+      // Ein Browser, der `files` nicht setzen lässt: der Stand bleibt, das
+      // Foto muss neu gewählt werden — die Zahl ist das Wichtigere.
+    }
   }
 }
 
@@ -775,6 +850,7 @@ function renderZaehlerliste() {
     return 0;                                   // sonst: Export-Reihenfolge
   });
 
+  const offen = offeneEingabenMerken();
   els.einheitenListe.innerHTML = "";
   for (const [kreisName, kreis] of geordnet) {
     const gruppe = document.createElement("section");
@@ -805,6 +881,7 @@ function renderZaehlerliste() {
     }
     els.einheitenListe.appendChild(gruppe);
   }
+  offeneEingabenZurueck(offen);
 }
 
 function baueZaehlerZeile(item) {
@@ -893,6 +970,23 @@ async function fotoKomprimieren(datei) {
   });
 }
 
+const FOTO_NICHT_LESBAR_TEXT = "Foto nicht lesbar — Stand ohne Foto gespeichert.";
+
+// Ein Satz unter der Zeile des Zählers, zu dem `btn` gehört — ohne Text
+// verschwindet er wieder.
+function zeileHinweisSetzen(btn, text) {
+  const zeile = btn?.closest?.(".zaehler-zeile");
+  if (!zeile) return;
+  let hinweis = zeile.querySelector(".zeile-hinweis");
+  if (!text) { hinweis?.remove(); return; }
+  if (!hinweis) {
+    hinweis = document.createElement("div");
+    hinweis.className = "hinweis-klein zeile-hinweis";
+    zeile.appendChild(hinweis);
+  }
+  hinweis.textContent = text;
+}
+
 const STAND_PRUEFEN_TEXT =
   "Bitte prüfen: Punkt nur als Tausender (12.345), Dezimalstellen mit Komma (12,5).";
 
@@ -937,17 +1031,25 @@ async function erfassenSpeichern(item, input, btn, fotoInput, fotoBtn, wert) {
     gesendet: false,
   };
 
+  // Kompression fehlgeschlagen -> Ablesung trotzdem speichern, nur ohne Foto
+  // (die Zahlenerfassung darf daran nicht scheitern). 28.09.2026
+  // (Mietverwaltung K137/F196): das Foto verschwand dabei still — jetzt
+  // steht es in der Zeile (Regel .109: benannt statt weggelassen). Ein
+  // leeres `toBlob` ist derselbe Fall.
+  let fotoNichtLesbar = false;
   if (fotoInput?.files?.[0]) {
     try {
-      eintrag.fotoBlob = await fotoKomprimieren(fotoInput.files[0]);
+      const blob = await fotoKomprimieren(fotoInput.files[0]);
+      if (!blob) throw new Error("leeres Bild");
+      eintrag.fotoBlob = blob;
       eintrag.fotoErweiterung = ".jpg";
     } catch {
-      // Kompression fehlgeschlagen -> Ablesung trotzdem speichern, nur ohne
-      // Foto (die Zahlenerfassung darf daran nicht scheitern, Regel .109).
+      fotoNichtLesbar = true;
     }
   }
 
   await AbleseQueue.hinzufuegen(eintrag);
+  if (fotoNichtLesbar) zeileHinweisSetzen(btn, FOTO_NICHT_LESBAR_TEXT);
   heuteGespeichert.add(item.zaehler_id);
   input.value = "";
   if (fotoInput) fotoInput.value = "";
