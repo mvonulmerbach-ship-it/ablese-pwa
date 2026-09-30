@@ -1,34 +1,51 @@
 # Ablese-Erfassung (PWA)
 
 Handy-App zum Erfassen von Zählerständen — schreibt je Ablesung eine kleine
-JSON-Datei ins OneDrive-Postfach (`Immobilien/Verwaltung/Ablesewerte/eingang/`,
+JSON-Datei ins Nextcloud-Postfach (`Arbeit/02 Immobilien/Verwaltung/Ablesewerte/eingang/`,
 Pfad in `js/config.js`), das der Master (Etappe A1) einliest und per Klick
-übernimmt. Spricht **nie** mit dem Server — nur mit OneDrive über Microsoft
-Graph. Meldet sich ein fremder Ableser an (A3), findet die App den Ordner
-automatisch über „Für mich freigegeben" statt über das eigene OneDrive.
+übernimmt. Spricht **nie** mit dem Master — nur per WebDAV mit Max' Nextcloud
+(seit K131, 30.09.2026; vorher OneDrive über Microsoft Graph). Meldet sich
+ein fremder Ableser an (A3), findet die App den freigegebenen Ordner
+automatisch unter seinem Namen im eigenen Wurzelordner.
 
 Quelldokument: `MOBIL_KONZEPT_WEG_A_2026-08-11.md` (Software-Root des
 Haupt-Repos). Dieses Repo ist bewusst eigenständig, **kein** Bestandteil von
 `mietverwaltung-git`.
 
-## Einmalige Einrichtung (GitHub Pages)
+## Einmalige Einrichtung (Nextcloud im Tailnet, K131)
 
-1. Auf GitHub: **Settings → Pages**.
-2. **Source:** „Deploy from a branch".
-3. **Branch:** `main`, Ordner `/ (root)`.
-4. Speichern — nach ein bis zwei Minuten ist die Seite erreichbar unter:
-   `https://mvonulmerbach-ship-it.github.io/ablese-pwa/`
+Die Nextcloud läuft auf dem TrueNAS und ist **nur im Tailnet** erreichbar:
+`https://truenas.tailb74bbe.ts.net:8443`. Die App muss von **derselben
+Herkunft** ausgeliefert werden (Schema, Host **und Port**), sonst blockiert
+der Browser die WebDAV-Anfragen (CORS):
 
-Diese Adresse muss exakt der Redirect-URI der Microsoft-App-Registrierung
-entsprechen (bereits so eingetragen, A2-Session).
+1. Die Dateien dieses Repos unter `https://truenas.tailb74bbe.ts.net:8443/ablese/`
+   ausliefern (z. B. Tailscale Serve mit Pfad oder eine Proxy-Regel vor der
+   Nextcloud). Ein anderer Port wäre eine fremde Herkunft und funktioniert
+   so nicht.
+2. Je Ableser ein Nextcloud-Konto; in der Nextcloud unter **Einstellungen →
+   Sicherheit** ein **App-Passwort** anlegen.
+3. Den Ordner `Arbeit/02 Immobilien/Verwaltung/Ablesewerte` für fremde Ableser
+   freigeben (Lesen + Schreiben). Die Infobasis wird **nie** freigegeben.
+4. Auf dem Master die beiden Ordner auf die Nextcloud stellen
+   (`tools/einrichten.py --postfach-ordner … --infobasis-ordner …`).
+
+**GitHub Pages ist abgelöst.** Die alte Fassung unter
+`https://mvonulmerbach-ship-it.github.io/ablese-pwa/` sprach Microsoft Graph
+(Hülle v7). Sie wird erst abgeschaltet, wenn die Schritte oben erledigt sind
+— bis dahin darf dieser Stand **nicht** nach GitHub Pages gepusht werden,
+sonst verlieren die Handys die laufende Fassung.
 
 ## Auf dem Handy einrichten
 
-**Android (Chrome):** Adresse öffnen → Chrome bietet unten „App
+Vorher: die **Tailscale-App** installieren und mit der Einladung ins Tailnet
+kommen — ohne sie ist die Adresse nicht erreichbar.
+
+**Android (Chrome):** `https://truenas.tailb74bbe.ts.net:8443/ablese/` öffnen → Chrome bietet unten „App
 installieren" an → bestätigen. Alternativ: Menü (⋮) → „App installieren".
 
 **iPhone (Safari, zu Fuß — Safari bietet hier keinen automatischen
-Hinweis):** Adresse öffnen → Teilen-Symbol (Quadrat mit Pfeil nach oben) →
+Hinweis):** dieselbe Adresse öffnen → Teilen-Symbol (Quadrat mit Pfeil nach oben) →
 „Zum Home-Bildschirm" → „Hinzufügen".
 
 Danach startet die App wie eine normale App vom Home-Bildschirm, auch
@@ -36,7 +53,9 @@ offline (die App-Hülle ist gecacht).
 
 ## Benutzung
 
-1. App öffnen, mit dem persönlichen Microsoft-Konto anmelden (einmalig).
+1. App öffnen, mit Nextcloud-Konto und App-Passwort anmelden (einmalig).
+   Ist das App-Passwort abgelaufen, zeigt die App das Formular wieder —
+   erfasste Stände bleiben in der Warteschlange.
 2. Zählerliste lädt automatisch (zeigt ihr Datenalter — „Zählerliste vom
    TT.MM.JJJJ").
 3. Datum und Anlass oben wählen (Vorgabe: heute / Stichtag).
@@ -63,9 +82,9 @@ Datenbereiche, jeweils mit „Stand vom TT.MM.JJJJ":
 - **Letzte Zählerstände** — dieselbe Liste wie die Ablese-Seite am Master.
 - **Offene Aufgaben** — dieselbe Liste wie das Dashboard am Master.
 
-Der Export liegt in einem eigenen, **nie freigegebenen** OneDrive-Ordner
-NEBEN dem Postfach (`js/config.js::infobasisPfad`) — nur mit Max' eigenem
-Microsoft-Konto lesbar, ein fremder Ableser (A3) sieht ihn nicht. Läuft am
+Der Export liegt in einem eigenen, **nie freigegebenen** Nextcloud-Ordner
+(`js/config.js::infobasisPfad`) — nur mit Max' eigenem Nextcloud-Konto
+lesbar, ein fremder Ableser (A3) sieht ihn nicht. Läuft am
 Master automatisch hinter jedem Backup (`backend/infobasis_export.py`),
 kein Knopf nötig. Wie die Zählerliste wird jeder Bereich einzeln offline
 vorgehalten (localStorage) — ein fehlender Export blockiert die anderen
@@ -84,12 +103,11 @@ und die Einträge am Master als Vorschlag auftauchen.
 index.html         Formular-Shell
 app.css             Grosse, mobil-taugliche Bedienelemente
 manifest.json        PWA-Manifest (Icons, Name, Start-URL)
-sw.js                 Service Worker — cached NUR die App-Hülle, nie Graph-Antworten
-js/config.js           Client-ID, Redirect-URI, Postfach-Pfad — die eine Stelle
-js/auth.js              MSAL-Anmeldung (PKCE, Redirect-Flow)
-js/graph.js               Microsoft-Graph-Zugriff (Zählerliste lesen, Ablesung schreiben)
+sw.js                 Service Worker — cached NUR die App-Hülle, nie /remote.php/
+js/config.js           Server (= eigene Herkunft), Postfach- und Infobasis-Pfad
+js/auth.js              Anmeldung: Nextcloud-Konto + App-Passwort (im Gerät gespeichert)
+js/ablage.js              WebDAV-Zugriff (Zählerliste lesen, Ablesung schreiben, Infobasis)
 js/queue.js                 Offline-Warteschlange (IndexedDB)
 js/app.js                    Verdrahtung
-vendor/msal/                 @azure/msal-browser, lokal vendorisiert (kein CDN)
 icons/                        App-Icons
 ```

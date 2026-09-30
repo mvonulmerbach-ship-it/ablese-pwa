@@ -99,6 +99,8 @@ async function init() {
   els.appBereich = q("app-bereich");
   els.ladeBereich = q("lade-bereich");
   els.btnAnmelden = q("btn-anmelden");
+  els.feldKonto = q("feld-konto");
+  els.feldAppPasswort = q("feld-app-passwort");
   els.anmeldenFehler = q("anmelden-fehler");
   els.kontoZeile = q("konto-zeile");
   els.zaehlerlisteStand = q("zaehlerliste-stand");
@@ -140,7 +142,11 @@ async function init() {
   els.btnAnmelden.addEventListener("click", async () => {
     els.anmeldenFehler.hidden = true;
     try {
-      await AbleseAuth.anmelden();
+      // K131: Konto + App-Passwort statt Microsoft-Weiterleitung. Nach
+      // erfolgreicher Pruefung startet die App neu — derselbe Weg, den die
+      // Weiterleitung frueher genommen hat, also derselbe Start wie immer.
+      await AbleseAuth.anmelden(els.feldKonto.value, els.feldAppPasswort.value);
+      location.reload();
     } catch (fehler) {
       zeigeAnmeldenFehler(fehler);
     }
@@ -266,7 +272,7 @@ async function infobasisVomGraphLaden() {
 // eine Antwort; nur ein Fehler lässt den Teil beim nächsten Anlass nachladen.
 async function ladeInfobasisTeil(token, key, teil) {
   try {
-    const daten = await AbleseGraph.infobasisLesen(token, teil.datei);
+    const daten = await AbleseAblage.infobasisLesen(token, teil.datei);
     if (!daten) {
       infobasisFehler[key] =
         "Noch kein Export vorhanden — läuft am Master automatisch beim nächsten Backup (A5).";
@@ -279,6 +285,7 @@ async function ladeInfobasisTeil(token, key, teil) {
     nachsehenZeichnen();
     return true;
   } catch (fehler) {
+    if (anmeldungAbgelaufen(fehler)) return false;
     // Mit Cache im Ruecken bleibt der zuletzt geladene Stand sichtbar —
     // gemeldet wird nur, wenn dieser Bereich sonst gar nichts zu zeigen hat.
     if (!infobasisDaten[key]) {
@@ -736,6 +743,16 @@ function zeigeAnmeldenFehler(fehler) {
   els.anmeldenFehler.textContent = `Anmeldung fehlgeschlagen: ${fehler.message || fehler}`;
 }
 
+// K131: ein 401 heisst, das App-Passwort gilt nicht mehr. ablage.js hat die
+// gespeicherte Anmeldung schon geloescht; hier kommt das Formular, damit
+// „bitte neu anmelden“ auch einen Weg hat. Die Warteschlange bleibt.
+function anmeldungAbgelaufen(fehler) {
+  if (!fehler?.anmeldungNoetig) return false;
+  zeigeAnmeldenFehler(fehler);
+  zeigeBereich("anmelden");
+  return true;
+}
+
 function ladeZaehlerlisteAusCache() {
   const roh = localStorage.getItem(ZAEHLERLISTE_CACHE_SCHLUESSEL);
   if (!roh) return;
@@ -756,7 +773,7 @@ async function zaehlerlisteVomGraphLaden() {
   }
   try {
     const token = await AbleseAuth.tokenHolen();
-    const daten = await AbleseGraph.zaehlerlisteLesen(token);
+    const daten = await AbleseAblage.zaehlerlisteLesen(token);
     if (!daten) {
       els.zaehlerlisteStand.textContent =
         "Noch keine Zählerliste im Postfach — am Master exportieren (A1).";
@@ -772,6 +789,7 @@ async function zaehlerlisteVomGraphLaden() {
     localStorage.setItem(ZAEHLERLISTE_CACHE_SCHLUESSEL, roh);
     renderZaehlerliste();
   } catch (fehler) {
+    if (anmeldungAbgelaufen(fehler)) return;
     if (!zaehlerlisteAktuell) {
       els.zaehlerlisteStand.textContent = `Zählerliste konnte nicht geladen werden: ${fehler.message || fehler}`;
     }
@@ -1092,11 +1110,12 @@ let synchronisierungLaeuft = false;
 // Keller (abgelaufene Anmeldung, Ordner nicht freigegeben, Pfad falsch).
 let letzterSendeFehler = null;
 
-// Die Graph-/MSAL-Meldungen sind englisch und technisch; die drei Fälle, die
-// am Handy wirklich vorkommen, bekommen deshalb Klartext. Alles andere wird
+// Die WebDAV-Meldungen sind nackte Statuszeilen; die Fälle, die am Handy
+// wirklich vorkommen, bekommen deshalb Klartext. Alles andere wird
 // unverändert durchgereicht — lieber eine rohe Meldung als gar keine.
 function sendeFehlerText(fehler) {
   const roh = fehler?.message || String(fehler);
+  if (fehler?.anmeldungNoetig) return roh;
   if (/nicht angemeldet/i.test(roh)) {
     return "Nicht (mehr) angemeldet — bitte oben neu anmelden, dann „Jetzt senden“.";
   }
@@ -1144,7 +1163,7 @@ async function synchronisieren() {
     const token = await AbleseAuth.tokenHolen();
     for (const eintrag of offen) {
       try {
-        await AbleseGraph.ablesungHochladen(token, eintrag);
+        await AbleseAblage.ablesungHochladen(token, eintrag);
         await AbleseQueue.alsGesendetMarkieren(eintrag.id);
       } catch (fehler) {
         // Ein einzelner fehlgeschlagener Eintrag bricht die Sitzung nicht
@@ -1152,6 +1171,7 @@ async function synchronisieren() {
         // Versuch erneut probiert.
         console.warn("Ablesung konnte nicht gesendet werden:", eintrag.id, fehler);
         fehlerDiesesLaufs = fehler;
+        if (anmeldungAbgelaufen(fehler)) break;
       }
     }
   } catch (fehler) {

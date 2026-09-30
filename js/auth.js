@@ -1,89 +1,120 @@
-// MSAL-Anmeldung (persönliches Microsoft-Konto, PKCE) — vendorisiertes
-// @azure/msal-browser (vendor/msal/), kein CDN (Muster Leaflet/U9).
+// Anmeldung an Max' Nextcloud (K131, ersetzt die Microsoft-Anmeldung): je Ableser ein
+// Nextcloud-Konto mit App-Passwort (Einstellungen → Sicherheit). Die Fassade
+// bleibt dieselbe wie zu Microsoft-Zeiten — `bereitstellen`, `konto`, `anmelden`,
+// `abmelden`, `tokenHolen` —, damit app.js nur die Formular-Werte uebergibt.
+//
+// Gespeichert wird im Geraet: IndexedDB wie die Warteschlange (queue.js),
+// sonst localStorage. Die Anmeldung soll den Neustart der installierten PWA
+// ueberleben — genau wie vorher der Microsoft-Anmeldecache in localStorage.
 "use strict";
 
 const AbleseAuth = (() => {
-  let msalApp = null;
+  const DB_NAME = "ablese-anmeldung";
+  const STORE = "konto";
+  const SCHLUESSEL = "aktiv";
+  const LS_SCHLUESSEL = "ablese_anmeldung_v1";
+  let aktiv = null;
   let bereitPromise = null;
 
-  function konfiguration() {
-    return {
-      auth: {
-        clientId: ABLESE_KONFIG.clientId,
-        authority: ABLESE_KONFIG.authority,
-        redirectUri: ABLESE_KONFIG.redirectUri,
-        // "consumers"-Authority + fremder Kontotyp würde sonst mit einem
-        // Cross-Cloud-Fehler abgewiesen statt sauber zur Anmeldung zu führen.
-        navigateToLoginRequestUrl: true,
-      },
-      cache: {
-        // localStorage statt sessionStorage: die Anmeldung soll den
-        // Neustart der (ggf. installierten) PWA überleben.
-        cacheLocation: "localStorage",
-        storeAuthStateInCookie: false,
-      },
-    };
+  function dbOeffnen() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function dbAufruf(modus, arbeit) {
+    const db = await dbOeffnen();
+    return new Promise((resolve, reject) => {
+      const req = arbeit(db.transaction(STORE, modus).objectStore(STORE));
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function laden() {
+    try {
+      return (await dbAufruf("readonly", (s) => s.get(SCHLUESSEL))) || null;
+    } catch {
+      try {
+        return JSON.parse(localStorage.getItem(LS_SCHLUESSEL) || "null");
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  async function speichern(wert) {
+    try {
+      await dbAufruf("readwrite", (s) => (wert ? s.put(wert, SCHLUESSEL) : s.delete(SCHLUESSEL)));
+    } catch {
+      try {
+        if (wert) localStorage.setItem(LS_SCHLUESSEL, JSON.stringify(wert));
+        else localStorage.removeItem(LS_SCHLUESSEL);
+      } catch {
+        // Kein Speicher im Geraet: die Anmeldung gilt dann nur bis zum
+        // naechsten Start — die Erfassung selbst haengt nicht daran.
+      }
+    }
+  }
+
+  // UTF-8 vor Base64: ein Umlaut im Kontonamen braeche `btoa` sonst.
+  function basisWert(benutzer, passwort) {
+    const bytes = new TextEncoder().encode(`${benutzer}:${passwort}`);
+    let bin = "";
+    for (const b of bytes) bin += String.fromCharCode(b);
+    return `Basic ${btoa(bin)}`;
   }
 
   async function bereitstellen() {
     if (bereitPromise) return bereitPromise;
     bereitPromise = (async () => {
-      msalApp = new msal.PublicClientApplication(konfiguration());
-      await msalApp.initialize();
-      // Schliesst einen laufenden Redirect-Login ab (No-Op ohne Redirect).
-      const ergebnis = await msalApp.handleRedirectPromise();
-      return ergebnis;
+      aktiv = await laden();
+      return aktiv;
     })();
     return bereitPromise;
   }
 
-  // Braucht der Fehler eine Anmeldung durch den Menschen? MSAL meldet das als
-  // InteractionRequiredAuthError (Klasse oder Name — je nach Bündel-Stand).
-  function interaktionNoetig(fehler) {
-    const Klasse = typeof msal !== "undefined" ? msal.InteractionRequiredAuthError : undefined;
-    return (!!Klasse && fehler instanceof Klasse) || fehler?.name === "InteractionRequiredAuthError";
-  }
-
+  // Dieselbe Form wie das fruehere Microsoft-Konto, das app.js liest (`name`, `username`).
   function konto() {
-    if (!msalApp) return null;
-    const konten = msalApp.getAllAccounts();
-    return konten.length ? konten[0] : null;
+    return aktiv ? { name: aktiv.benutzer, username: aktiv.benutzer } : null;
   }
 
-  async function anmelden() {
-    await bereitstellen();
-    // Redirect statt Popup: in einer installierten Standalone-PWA (Home-
-    // Bildschirm, v. a. iOS) sind Popup-Fenster unzuverlässig.
-    await msalApp.loginRedirect({ scopes: ABLESE_KONFIG.scopes });
+  // Prueft die Werte einmal gegen die Nextcloud (PROPFIND auf die eigene
+  // Wurzel), bevor sie gespeichert werden — ein Tippfehler faellt sofort
+  // auf und nicht erst beim ersten Senden im Keller.
+  async function anmelden(benutzer, passwort) {
+    benutzer = (benutzer || "").trim();
+    passwort = (passwort || "").trim();
+    if (!benutzer || !passwort) {
+      throw new Error("Bitte Konto und App-Passwort eintragen.");
+    }
+    const token = basisWert(benutzer, passwort);
+    const url = `${ABLESE_KONFIG.server}/remote.php/dav/files/${encodeURIComponent(benutzer)}`;
+    const resp = await fetch(url, {
+      method: "PROPFIND",
+      headers: { Authorization: token, Depth: "0" },
+      credentials: "omit",
+    });
+    if (resp.status === 401) {
+      throw new Error("Konto oder App-Passwort falsch — bitte in der Nextcloud unter Einstellungen → Sicherheit ein App-Passwort anlegen.");
+    }
+    if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+    aktiv = { benutzer, token };
+    await speichern(aktiv);
   }
 
   async function abmelden() {
-    await bereitstellen();
-    const account = konto();
-    await msalApp.logoutRedirect({ account });
+    aktiv = null;
+    await speichern(null);
   }
 
   async function tokenHolen() {
     await bereitstellen();
-    const account = konto();
-    if (!account) throw new Error("nicht angemeldet");
-    const anfrage = { scopes: ABLESE_KONFIG.scopes, account };
-    try {
-      const ergebnis = await msalApp.acquireTokenSilent(anfrage);
-      return ergebnis.accessToken;
-    } catch (fehler) {
-      // Stiller Token-Bezug scheitert typischerweise, wenn die Zustimmung
-      // erneut nötig ist (z. B. abgelaufene Sitzung) — dann interaktiv.
-      // 15.09.2026 (W68/F67): NUR dann. Ein Netzfehler im Keller löste bis
-      // hierher ebenfalls die Weiterleitung aus — die Seite verließ sich
-      // selbst, ohne Netz. Jetzt geht der Fehler an den Aufrufer, die
-      // Warteschlange bleibt, und der nächste Anstoß versucht es erneut.
-      if (!interaktionNoetig(fehler)) throw fehler;
-      await msalApp.acquireTokenRedirect(anfrage);
-      // acquireTokenRedirect verlässt die Seite; dieser Rückgabewert wird
-      // praktisch nie erreicht.
-      return null;
-    }
+    if (!aktiv) throw new Error("nicht angemeldet");
+    return aktiv.token;
   }
 
   return { bereitstellen, konto, anmelden, abmelden, tokenHolen };

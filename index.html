@@ -58,8 +58,17 @@
 
 <main>
   <section id="anmelden-bereich">
-    <p>Zum Erfassen von Zählerständen bitte mit deinem Microsoft-Konto anmelden.</p>
-    <button id="btn-anmelden" class="btn-primaer">Mit Microsoft anmelden</button>
+    <!-- K131 (30.09.2026): Nextcloud statt Microsoft — je Ableser ein Konto
+         mit App-Passwort, die App liegt auf derselben Adresse wie die Nextcloud. -->
+    <p>Zum Erfassen von Zählerständen bitte mit deinem Nextcloud-Konto anmelden.</p>
+    <p>Konto und App-Passwort aus der Nextcloud (Einstellungen → Sicherheit).</p>
+    <label>Konto
+      <input type="text" id="feld-konto" autocomplete="username" autocapitalize="none" spellcheck="false">
+    </label>
+    <label>App-Passwort
+      <input type="password" id="feld-app-passwort" autocomplete="current-password">
+    </label>
+    <button id="btn-anmelden" class="btn-primaer">Anmelden</button>
     <p id="anmelden-fehler" class="fehler" hidden></p>
   </section>
 
@@ -123,13 +132,12 @@
   </section>
 </main>
 
-<script src="vendor/msal/msal-browser.min.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/config.js"></script>
 <script src="js/zahl.js"></script>
 <script src="js/queue.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/graph.js"></script>
+<script src="js/ablage.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

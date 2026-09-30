@@ -155,7 +155,8 @@ select:focus-visible {
   margin-bottom: var(--abstand-4);
   flex-wrap: wrap;
 }
-#erfassung-kopf label {
+#erfassung-kopf label,
+#anmelden-bereich label {
   flex: 1 1 140px;
   font-size: 0.85rem;
   color: var(--feld-label);
@@ -164,7 +165,8 @@ select:focus-visible {
   gap: var(--feld-label-abstand);
 }
 #erfassung-kopf input,
-#erfassung-kopf select {
+#erfassung-kopf select,
+#anmelden-bereich input {
   font-family: inherit;
   font-size: 1rem;
   padding: 10px;

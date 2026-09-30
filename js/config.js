@@ -1,36 +1,21 @@
 // Konfiguration der Ablese-PWA (A2, MOBIL_KONZEPT_WEG_A_2026-08-11.md).
-// Bewusst eine einzige Stelle für die drei Werte, die sich mit der
-// Microsoft-App-Registrierung bzw. dem Postfach-Pfad ändern können.
+// Bewusst eine einzige Stelle fuer die Werte, die sich mit dem Ablageort
+// aendern koennen.
+//
+// K131 (Mietverwaltung, 30.09.2026): die Ablage ist Max' Nextcloud statt
+// OneDrive. Die App wird von DERSELBEN Herkunft ausgeliefert wie die
+// Nextcloud (https://truenas.tailb74bbe.ts.net:8443/ablese/) — deshalb ist
+// der Server einfach `location.origin`, und es gibt kein CORS. Die
+// Microsoft-Werte (clientId, redirectUri, authority, scopes) sind entfallen.
 "use strict";
 
 const ABLESE_KONFIG = {
-  // Anwendungs-ID (Client) aus der Microsoft-Entra-App-Registrierung.
-  clientId: "b40ae3e8-6ebf-4332-9a16-6206b22084aa",
-  // Muss exakt der als SPA-Redirect-URI registrierten Adresse entsprechen.
-  redirectUri: "https://mvonulmerbach-ship-it.github.io/ablese-pwa/",
-  // "consumers" statt "common": die Registrierung erlaubt ausdrücklich NUR
-  // persönliche Microsoft-Konten (siehe Registrierungs-Entscheidung A2).
-  authority: "https://login.microsoftonline.com/consumers",
-  // Files.ReadWrite.All (NICHT .AppFolder) statt des schmaleren
-  // Files.ReadWrite: seit A3 melden sich auch fremde Konten an, die den
-  // Postfach-Ordner nur als Freigabe sehen ("mit mir geteilt") — dafür
-  // reicht der eigene-Drive-Scope nicht. Deckt Max' eigenes Konto mit ab.
-  scopes: ["Files.ReadWrite.All", "User.Read"],
-  // Pfad relativ zum OneDrive-Root DES EIGENTÜMER-Kontos (Max), nicht
-  // zwingend zum Root des angemeldeten Kontos — bei fremden Konten (A3)
-  // wird dieser Name über "Für mich freigegeben" gesucht (graph.js).
-  // Bestätigt A3-Session (14.08.2026); vorher A2-Namensvorschlag war
-  // "Immobilien/Ablese-Postfach", inzwischen überholt.
-  // 09.09.2026: der Pfad stand root-relativ OHNE das Präfix "Dokumente/
-  // Arbeit/2-Grund-und Boden/" — im OneDrive-Root gibt es aber gar keinen
-  // Ordner "Immobilien"; der echte Ablesewerte-Ordner liegt darunter.
-  // Jeder Abruf lief damit ins Leere, ohne dass es je auffiel (der Master
-  // hat bis dahin auch nichts exportiert).
-  postfachPfad: "Dokumente/Arbeit/2-Grund-und Boden/Immobilien/Verwaltung/Ablesewerte",
-  // A5 (v0.49.169): eigener, NIE freigegebener Ordner NEBEN dem Postfach
-  // (backend/infobasis_export.py schreibt hierhin). Bewusst KEIN
-  // sharedWithMe-Fallback wie beim Postfach — nur Max' eigenes Konto liest
-  // ihn (graph.js::infobasisLesen), ein fremder Ableser sieht ihn nie.
-  // Pfad-Korrektur 09.09.2026 wie beim postfachPfad oben — derselbe Fehler.
-  infobasisPfad: "Dokumente/Arbeit/2-Grund-und Boden/Immobilien/Infobasis",
+  server: location.origin,
+  // Pfad relativ zum Nextcloud-Wurzelordner DES EIGENTUEMER-Kontos (Max).
+  // Ein fremder Ableser (A3) findet den freigegebenen Ordner unter seinem
+  // Namen ("Ablesewerte") im eigenen Wurzelordner (ablage.js).
+  postfachPfad: "Arbeit/02 Immobilien/Verwaltung/Ablesewerte",
+  // A5 (v0.49.169): eigener, NIE freigegebener Ordner — nur Max' eigenes
+  // Konto liest ihn (ablage.js::infobasisLesen), ein fremder Ableser nie.
+  infobasisPfad: "Arbeit/02 Immobilien/Infobasis",
 };

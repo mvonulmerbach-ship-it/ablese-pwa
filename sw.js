@@ -1,7 +1,13 @@
-// Cached NUR die App-Huelle (fuers Offline-Oeffnen im Keller) — Graph-
+// Cached NUR die App-Huelle (fuers Offline-Oeffnen im Keller) — WebDAV-
 // Antworten (Zaehlerliste, Uploads) laufen NIE ueber den Cache, sonst waere
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
+
+// v8: 30.09.2026 — Mietverwaltung K131: Nextcloud statt OneDrive. js/ablage.js
+// (WebDAV) ersetzt js/graph.js, die Anmeldung ist Konto + App-Passwort, die
+// Microsoft-Bibliothek ist entfallen. Die App liegt jetzt auf DERSELBEN
+// Herkunft wie die Nextcloud — deshalb reicht „fremde Herkunft nie abfangen“
+// nicht mehr: alles unter /remote.php/ wird ausdruecklich durchgereicht.
 
 // v7: 28.09.2026 — Mietverwaltung K137: Eingaben und Fotos bleiben beim
 // Nachladen der Zählerliste, ein Funkloch heilt von selbst (Zählerliste und
@@ -28,7 +34,7 @@
 // v3: 01.09.2026 — die Icons kamen aus dem Hauslogo der Gutsverwaltung.
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
-const CACHE_NAME = "ablese-huelle-v7";
+const CACHE_NAME = "ablese-huelle-v8";
 const HUELLE = [
   "./",
   "index.html",
@@ -42,9 +48,8 @@ const HUELLE = [
   "js/zahl.js",
   "js/queue.js",
   "js/auth.js",
-  "js/graph.js",
+  "js/ablage.js",
   "js/app.js",
-  "vendor/msal/msal-browser.min.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
   // v5: die drei fehlten — das maskable Icon steht im Manifest (Android
@@ -76,9 +81,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  // Fremde Herkunft (login.microsoftonline.com, graph.microsoft.com) NIE
-  // abfangen — nur die eigene App-Huelle wird gecacht.
+  // Fremde Herkunft NIE abfangen — nur die eigene App-Huelle wird gecacht.
   if (url.origin !== self.location.origin) return;
+  // K131: die Nextcloud teilt sich die Herkunft mit der App. Ihre Antworten
+  // (zaehlerliste.json, Infobasis) duerfen nie aus dem Cache kommen.
+  if (url.pathname.startsWith("/remote.php/")) return;
   if (event.request.method !== "GET") return;
 
   event.respondWith(
