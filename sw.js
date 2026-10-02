@@ -3,6 +3,17 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
+// v9: 02.10.2026 — Mini-App-Ueberarbeitung S1 (Befund Q-1): Auf GitHub Pages
+// liegen alle Mini-Apps auf DERSELBEN Herkunft und teilen sich EINEN
+// Cache-Speicher. Der Worker loeschte beim Aktivieren jeden fremden Cache
+// (und die anderen Apps seinen) — nach einmal Pizzateig oeffnen startete
+// die Ablesung offline nicht mehr. Jetzt: Cache-Name mit App-Praefix, beim
+// Aktivieren nur eigene alte Huellen (und die Altlast "ablese-huelle-")
+// loeschen, Treffer nur aus dem eigenen Cache, nur Anfragen im eigenen
+// Geltungsbereich abfangen. "::" als Trenner, damit ein Praefix nie den
+// Namen einer anderen App mit gleichem Anfang trifft. Dazu Hell/Dunkel
+// dreistufig in js/theme.js und 44-px-Tippflaechen in app.css.
+
 // v8: 30.09.2026 — Mietverwaltung K131: Nextcloud statt OneDrive. js/ablage.js
 // (WebDAV) ersetzt js/graph.js, die Anmeldung ist Konto + App-Passwort, die
 // Microsoft-Bibliothek ist entfallen. Die App liegt jetzt auf DERSELBEN
@@ -34,7 +45,9 @@
 // v3: 01.09.2026 — die Icons kamen aus dem Hauslogo der Gutsverwaltung.
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
-const CACHE_NAME = "ablese-huelle-v8";
+const PRAEFIX = "ablese-pwa::";
+const CACHE_NAME = PRAEFIX + "huelle-v9";
+const ALT_PRAEFIXE = ["ablese-huelle-"];   // Huellen bis v8
 const HUELLE = [
   "./",
   "index.html",
@@ -73,7 +86,12 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((namen) =>
-      Promise.all(namen.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+      // Nur eigene Caches loeschen — niemals die der anderen Apps derselben
+      // Herkunft (Q-1).
+      Promise.all(namen
+        .filter((n) => (n.startsWith(PRAEFIX) && n !== CACHE_NAME) ||
+                       ALT_PRAEFIXE.some((a) => n.startsWith(a)))
+        .map((n) => caches.delete(n)))
     )
   );
   self.clients.claim();
@@ -81,15 +99,17 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  // Fremde Herkunft NIE abfangen — nur die eigene App-Huelle wird gecacht.
-  if (url.origin !== self.location.origin) return;
+  // Nur den eigenen Geltungsbereich abfangen — fremde Herkunft und die
+  // anderen Apps auf derselben Herkunft nie (Q-1).
+  if (!event.request.url.startsWith(self.registration.scope)) return;
   // K131: die Nextcloud teilt sich die Herkunft mit der App. Ihre Antworten
   // (zaehlerliste.json, Infobasis) duerfen nie aus dem Cache kommen.
   if (url.pathname.startsWith("/remote.php/")) return;
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then((treffer) => {
+    // v9: nur im EIGENEN Cache suchen — caches.match durchsuchte alle Apps.
+    caches.open(CACHE_NAME).then((huelle) => huelle.match(event.request)).then((treffer) => {
       // Im Hintergrund immer nachladen und die Huelle auffrischen. Laeuft
       // absichtlich NEBEN der Antwort: der Keller-Start wartet nie darauf.
       const nachladen = fetch(event.request)
@@ -112,7 +132,8 @@ self.addEventListener("fetch", (event) => {
       }
       // Nichts im Cache: auf das Netz warten, und wenn auch das nichts
       // liefert, die Huelle zeigen (Navigation aus dem Funkloch heraus).
-      return nachladen.then((antwort) => antwort || caches.match("index.html"));
+      return nachladen.then((antwort) => antwort ||
+        caches.open(CACHE_NAME).then((huelle) => huelle.match("index.html")));
     })
   );
 });

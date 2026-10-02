@@ -35,10 +35,18 @@
     <h1>Ablese-Erfassung</h1>
     <p id="konto-zeile" class="konto-zeile" hidden></p>
   </div>
-  <!-- Gleiche Bauart wie am Master: Mond in Ruhe, Sonne im Dunkelmodus,
-       Umschaltung in js/theme.js. -->
-  <button type="button" id="theme-umschalten" class="theme-umschalter" aria-pressed="false"
-          onclick="themeUmschalten()" title="Dunkles Design">
+  <!-- 02.10.2026: dreistufig System · Hell · Dunkel (js/theme.js). Das
+       Symbol zeigt die aktuelle Wahl: Halbkreis = System, Sonne = Hell,
+       Mond = Dunkel. -->
+  <button type="button" id="theme-umschalten" class="theme-umschalter" data-wahl="system"
+          onclick="themeUmschalten()" title="Erscheinungsbild: System"
+          aria-label="Erscheinungsbild: System">
+    <svg class="ic-svg icon-system" width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"></path>
+    </svg>
     <svg class="ic-svg icon-mond" width="18" height="18" viewBox="0 0 24 24" fill="none"
          stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
          stroke-linejoin="round" aria-hidden="true">

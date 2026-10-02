@@ -51,8 +51,9 @@ header {
 header h1 { margin: 0; font-size: 1.15rem; }
 .konto-zeile { margin: 2px 0 0; font-size: 0.85rem; color: var(--text-schwach); }
 
-/* Theme-Umschalter — gleiche Bauart wie am Master (index.html dort):
-   Mond in Ruhe, Sonne unter [data-theme="dark"]. */
+/* Theme-Umschalter — gleiche Bauart wie am Master (index.html dort), seit
+   02.10.2026 dreistufig: das Symbol zeigt die Wahl (data-wahl aus
+   js/theme.js), Halbkreis = System, Sonne = Hell, Mond = Dunkel. */
 .theme-umschalter {
   background: transparent;
   border: 1px solid var(--linie);
@@ -67,9 +68,10 @@ header h1 { margin: 0; font-size: 1.15rem; }
   flex: 0 0 auto;
   cursor: pointer;
 }
-.theme-umschalter .icon-sonne { display: none; }
-[data-theme="dark"] .theme-umschalter .icon-sonne { display: block; }
-[data-theme="dark"] .theme-umschalter .icon-mond { display: none; }
+.theme-umschalter .ic-svg { display: none; }
+.theme-umschalter[data-wahl="system"] .icon-system,
+.theme-umschalter[data-wahl="light"] .icon-sonne,
+.theme-umschalter[data-wahl="dark"] .icon-mond { display: block; }
 
 main { padding: var(--abstand-4); max-width: 640px; margin: 0 auto; }
 
@@ -176,6 +178,8 @@ select:focus-visible {
   color: var(--feld-text);
   min-height: 44px;
 }
+/* 02.10.2026: "Anmelden" klebte ohne Abstand am Passwortfeld (GP-29). */
+#anmelden-bereich .btn-primaer { margin-top: var(--abstand-4); }
 
 .einheit-karte {
   background: var(--flaeche-card);
@@ -286,7 +290,7 @@ select:focus-visible {
   flex: 1;
   background: transparent;
   color: var(--leiste-text-ruhig);
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -362,7 +366,7 @@ select:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 12px 0 8px;
   font-size: 0.85rem;
   background: var(--flaeche-card);
@@ -466,9 +470,14 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: 44px;
 }
+/* 02.10.2026: der Link selbst ist die Tippflaeche — er fuellt die 44 px
+   der Zeile, nicht nur die Hoehe seiner Schrift. */
 .kontakt-zeile a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--text-normal);
   text-decoration: underline;
   text-underline-offset: 2px;

@@ -132,7 +132,7 @@ async function init() {
   els.reiterNachsehen.insertAdjacentHTML("afterbegin", icSvg("eye"));
   els.btnJetztSenden.insertAdjacentHTML("afterbegin", icSvg("arrow-up-right") + " ");
   els.offlineHinweis.insertAdjacentHTML("afterbegin", icSvg("triangle-alert") + " ");
-  themeZustandAnwenden(themeDunkelLesen());
+  themeAnwenden();
 
   els.feldDatum.value = feldDatumStandard();
   els.feldAnlass.innerHTML = ABLESE_ANLAESSE
