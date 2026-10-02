@@ -3,6 +3,9 @@
 // die Datenaktualitaet des Zustands verdeckt (Geraete-Realitaet, A2).
 "use strict";
 
+// v10: 02.10.2026 — Mini-App-Ueberarbeitung S8 (NP-3): Vorladen mit cache:"reload",
+// wie in allen anderen Mini-Apps.
+
 // v9: 02.10.2026 — Mini-App-Ueberarbeitung S1 (Befund Q-1): Auf GitHub Pages
 // liegen alle Mini-Apps auf DERSELBEN Herkunft und teilen sich EINEN
 // Cache-Speicher. Der Worker loeschte beim Aktivieren jeden fremden Cache
@@ -46,7 +49,7 @@
 // v2: UI-Uebernahme 31.08.2026 — Token-Dateien, Icon-Bank und Theme-Schalter
 // gehoeren zur Huelle; der neue Cache-Name verdraengt die v1-Huelle.
 const PRAEFIX = "ablese-pwa::";
-const CACHE_NAME = PRAEFIX + "huelle-v9";
+const CACHE_NAME = PRAEFIX + "huelle-v10";
 const ALT_PRAEFIXE = ["ablese-huelle-"];   // Huellen bis v8
 const HUELLE = [
   "./",
@@ -78,7 +81,9 @@ const HUELLE = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(HUELLE))
+    // v10: am HTTP-Cache des Browsers vorbei vorladen (cache:"reload") - sonst kann nach
+    // einem Update noch eine frische alte Datei in die neue Huelle geraten.
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(HUELLE.map((u) => new Request(u, { cache: "reload" }))))
   );
   self.skipWaiting();
 });
